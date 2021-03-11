@@ -26,6 +26,7 @@
 #include <stdio.h>   // Required for sprintf() function
 #include <stdlib.h>  // Required for abs() function
 #include <math.h>
+#include <errno.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -44,6 +45,7 @@
 
 /* Private variables ---------------------------------------------------------*/
 ADC_HandleTypeDef hadc1;
+DMA_HandleTypeDef hdma_adc1;
 
 DAC_HandleTypeDef hdac1;
 
@@ -51,15 +53,30 @@ UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
 #define MAX_DAC_NUMBER 4095
+
+const int CLOCK_SPEED = 72000000; //Needed to measure time using clock cycles passed
+const int RAM_SIZE = 80000; //kB
+const double ADC_CYCLES = 61.5; //Set in .ioc
+
+int debug = 1;
+
+const int max_samples = 25000; //Uses 50kB of memory
+short data[25000]; //Large arrays can't be created during runtime
+
+volatile int sample_completed = 0; //Used in getWaveform and the ADC IRQ function to communicate between threads
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
+static void MX_DMA_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_ADC1_Init(void);
 static void MX_DAC1_Init(void);
 /* USER CODE BEGIN PFP */
+
+
 
 /* USER CODE END PFP */
 
@@ -102,24 +119,29 @@ void printIntLn(int i)
  */
 void printStrLn(char str[])
 {
-	strcat(str, "\r\n");
-	serialOut(&huart2, str, strlen(str));
+	char newstr[strlen(str)+5];
+	strcpy(newstr, str);
+	strcat(newstr, "\r\n");
+	serialOut(&huart2, str, strlen(newstr));
 }
 
 void printWaveform(short data[], int size)
 {
-	printStr("<WF>");
 	for(int i = 0; i<size; i++)
 	{
 		printStr("|");
 		printInt(data[i]);
 	}
-	printStr("</WF>");
 }
 
-
-void readSerial(char* outputString, int readsize)
+/**
+ * Read "readsize" number of characters from serial port, and outputs to outputString
+ * Returns 1 if timed out, else 0
+ * printchar echoes the typed character back to the PC
+ */
+int readSerial(char* outputString, int readsize, int timeout, int printchar)
 {
+	int starttime = HAL_GetTick();
 	char rxedString[readsize+1];
 	for(int i = 0; i<readsize; i++)
 	{
@@ -139,17 +161,21 @@ void readSerial(char* outputString, int readsize)
 		  {
 			  rxedString[charnum] = rxedChar[0];
 			  charnum += 1;
-			  /*
-			  for(int i = 0; i<readsize; i++)
+			  if(printchar == 1)
 			  {
-				  printChar(rxedString[i]);
-			  }*/
+				  printChar(rxedChar[0]);
+			  }
 			  rxedChar[0] = '#';
 		  }
 
 		  if(rxedString[readsize-1] != '#')
 		  {
 			  break; //String is full
+		  }
+
+		  if(HAL_GetTick()-starttime > timeout)
+		  {
+			  return 1;
 		  }
 	}
 
@@ -164,6 +190,7 @@ void readSerial(char* outputString, int readsize)
 	rxedString[truesize] = 0; //Terminates string correctly
 
 	strcpy(outputString, rxedString);
+	return 0;
 }
 
 /**
@@ -172,20 +199,47 @@ void readSerial(char* outputString, int readsize)
 short readADC()
 {
 	HAL_ADC_Start(&hadc1);
-	//HAL_ADC_PollForConversion(&hadc1, 10);
+	HAL_ADC_PollForConversion(&hadc1, 10);
 	uint32_t value = HAL_ADC_GetValue(&hadc1);
 	return value;
 }
 
+
+/**
+ * Either extrapolates between samples to fit resolution_x or uses multiple samples per pixel
+ */
+void compressWaveform(short* data, short *newdata, int samples_taken, int resolution_x)
+{
+	for(int current_pixel = 0; current_pixel<resolution_x; current_pixel++)
+	{
+		newdata[current_pixel] = data[(int)(((double)current_pixel/resolution_x)*samples_taken)];
+	}
+	/*
+	int current_pixel = 0;
+	int current_sample = 0;
+	while(current_sample<samples)
+	{
+		if((current_sample+1) % samples_per_pixel == 0)
+		{
+			newdata[current_pixel] /= samples_per_pixel;
+			current_pixel++;
+		}
+		newdata[current_pixel] += data[current_sample];
+		current_sample++;
+	}*/
+}
+
+
 /**
  * Get the set amount of samples in the timeframe, and store in data
  */
-int getWaveform(short* data, int samples, int timeframe)
+void getWaveform(short* data_out, int resolution_x, double sample_time)
 {
 	//219,780 samples per second
 	//printInt(1);
 	//printInt((samples/219780.0)*1000.0);
 
+	/*
 	if((samples/219780.0)*1000.0 > timeframe) //If data is sampled often enough, delay isn't needed (eg <8.7ms at 1920 samples)
 	{
 		int start = HAL_GetTick();
@@ -195,29 +249,67 @@ int getWaveform(short* data, int samples, int timeframe)
 		}
 		printStr("Acquisition time (ms): ");
 		printInt(HAL_GetTick()-start);
+		printStr("\n\r");
 	}
-	//printInt(HAL_GetTick()-start);
+	*/
+	//double samples_per_ms = (25000/0.000032)/1000;
+
+	//double a = timeframe/0.0251;
+
+	//samples_needed = 220000*timeframe*0.001;
+	//printInt(samples_needed);
+	//int samples_needed = (double)samples_per_ms*timeframe;
+
+	int samples_needed = (sample_time/25.1)*max_samples; //At 61.5 cycles per reading, 25000 samples are taken in 25.1ms
+	if(samples_needed < max_samples)
+	{
+		if(debug)
+		{
+			printStr("High sample rate mode\n\r");
+			printInt(samples_needed);
+			printStr(" samples needed\n\r");
+		}
+		sample_completed = 0;
+		HAL_ADC_Start_DMA(&hadc1, (uint32_t*)data, samples_needed);
+		unsigned long t1 = DWT->CYCCNT; //32400
+		while(sample_completed == 0)
+		{
+			int a = 1;
+		}
+		unsigned long time2 = (DWT->CYCCNT);
+		HAL_ADC_Stop_DMA(&hadc1);
+
+		//printStr("Time:");
+		//printInt(time2);
+		/*
+		printStr("Time2:");
+		printInt(t1);*/
+		if(debug)
+		{
+			printStr("time delta:");
+			printInt(time2-t1);
+		}
+		//printInt((time2*1000000000)/(double)Clock_speed);
+		//printStr("/");
+		//printInt((int)(timeframe*1000.0));
+		//printStr("test");
+
+		//HAL_ADC_Start_IT(&hadc1);
+		//printStr("Data:");
+		//printInt(data[0]);
+
+		compressWaveform(data, data_out, samples_needed, resolution_x);
+	}
 }
 
-/**
- * Allows for more samples to be taken and then averaged
- */
-void compressWaveform(short* data, int samples, int resolution_x, int resolution_y)
+void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* AdcHandle)
 {
-	int samples_per_pixel = samples/resolution_x;
-	int current_pixel = 0;
-	short newdata[resolution_x];
-	newdata[current_pixel] += data[0];
-	for(int i = 1; i<samples;)
-	{
-		while(i % samples_per_pixel != 0)
-		{
-			newdata[current_pixel] += data[i];
-			i++;
-		}
-		//newdata[current_pixel];
-		current_pixel++;
-	}
+	sample_completed = 1;
+}
+
+void ADC_IRQHandler()
+{
+    HAL_ADC_IRQHandler(&hadc1);
 }
 /*
 void miliSleep(int sleeptime, int sleepcal)
@@ -248,7 +340,6 @@ int sleepCalibration()
 }*/
 /* USER CODE END 0 */
 
-
 /**
   * @brief  The application entry point.
   * @retval int
@@ -256,10 +347,11 @@ int sleepCalibration()
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-  int resolution_x = 1920;
-  int resolution_y = 1080;
 
-  int RAM_size = 80000;
+  int resolution_x = 1920;
+  int resolution_y = 1080; //Unused
+
+  double sample_time = 25; //in miliseconds, current maximum is 25
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -268,6 +360,11 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
+
+  //Enable clock cycle counter
+  CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
+  DWT->CYCCNT = 0;
+  DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
 
   /* USER CODE END Init */
 
@@ -283,55 +380,110 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
   MX_USART2_UART_Init();
   MX_ADC1_Init();
   MX_DAC1_Init();
   /* USER CODE BEGIN 2 */
-  printStr("Starting up...");
 
-  int max_samples = (RAM_size / 2) * 0.05 ; //80kB = 40k 16 bit shorts
-  max_samples = (max_samples / resolution_x) * resolution_x; //Helps with compression
-  printStr("Max samples set to: "); printInt(max_samples); printStr("\n\r");
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  //printInt(readADC());
-  //int sleep_cal = sleepCalibration();
-  //printInt(sleep_cal);
-  printStr("Ready\n\r");
-  short data[max_samples];
-  getWaveform(data, max_samples, 8);
-  printWaveform(data, max_samples);
 
+  if(debug) { printStr("Ready\n\r"); }
 
+  while(1)
+  {
+	  printStr(">");
+	  char input[2];
+	  while(readSerial(input, 1, 100000, debug) == 1)
+	  {
+		  printStr(">");
+	  }
 
-  /*
-  int sleep_cal = 1;
-  int start = HAL_GetTick();
-  sleep(1000, sleep_cal);
-  printIntLn(HAL_GetTick()-start);
-  start = HAL_GetTick();
+	  if(input[0] == 'A') //Acquire data
+	  {
+		  short newdata[resolution_x];
+		  for(int i = 0; i<resolution_x; i++)
+		  {
+			  newdata[i] = 0;
+		  }
+		  getWaveform(newdata, resolution_x, sample_time);
+		  printWaveform(newdata, resolution_x);
+	  }
+	  else if(input[0] == 'S') //Set variable
+	  {
+		  if(debug) { printStr("SetVar"); }
 
-  sleep(100, sleep_cal);
-  printIntLn(HAL_GetTick()-start);
-  start = HAL_GetTick();
-  sleep(10, sleep_cal);
-  printIntLn(HAL_GetTick()-start);
-  start = HAL_GetTick();
-  sleep(1, sleep_cal);
-  printIntLn(HAL_GetTick()-start);
-  start = HAL_GetTick();
-  sleep(2000, sleep_cal);
-  printIntLn(HAL_GetTick()-start);*/
+		  char variable_name[21];
+		  readSerial(variable_name, 20, 20000, 1);
+		  variable_name[20] = '\0';
 
-  //short data[20000];
-  //getWaveform(data, 20000, 1);
-  //printStr("got data");
-  //printWaveform(data, 50);
+		  char variable_value[21];
+		  readSerial(variable_value, 20, 20000, 1);
+		  variable_value[20] = '\0';
 
-  //serialOut(&huart2, hello, strlen(hello));
+		  if(strcmp(variable_name, "resolution_x") == 0)
+		  {
+			  char *end;
+			  int newval = strtol(variable_value, &end, 10);
+			  if(newval == 0)
+			  {
+				  printStr("Invalid number");
+			  }
+			  else
+			  {
+				  resolution_x = newval;
+			  }
+		  }
+		  else if(strcmp(variable_name, "resolution_y") == 0)
+		  {
+			  char *end;
+			  int newval = strtol(variable_value, &end, 10);
+			  if(newval == 0)
+			  {
+				  printStr("Invalid number");
+			  }
+			  else
+			  {
+				  resolution_y = newval;
+			  }
+		  }
+		  else if(strcmp(variable_name, "sample_time") == 0)
+		  {
+			  char *end;
+			  int newval = strtol(variable_value, &end, 10);
+			  if(newval == 0)
+			  {
+				  printStr("Invalid number");
+			  }
+			  else
+			  {
+				  sample_time = newval;
+			  }
+		  }
+		  else if(strcmp(variable_name, "DEBUG") == 0)
+		  {
+			  char *endptr;
+			  int newval = strtol(variable_value, &endptr, 10);
+			  if(endptr == variable_value)
+			  {
+				  printStr("Invalid number");
+			  }
+			  else
+			  {
+				  debug = newval;
+			  }
+		  }
+		  else
+		  {
+			  printStr("Variable not found");
+		  }
+	  }
 
+	  //HAL_Delay(100000);
+  }
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -409,13 +561,13 @@ static void MX_ADC1_Init(void)
   hadc1.Init.ClockPrescaler = ADC_CLOCK_ASYNC_DIV1;
   hadc1.Init.Resolution = ADC_RESOLUTION_12B;
   hadc1.Init.ScanConvMode = ADC_SCAN_DISABLE;
-  hadc1.Init.ContinuousConvMode = DISABLE;
+  hadc1.Init.ContinuousConvMode = ENABLE;
   hadc1.Init.DiscontinuousConvMode = DISABLE;
   hadc1.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
   hadc1.Init.ExternalTrigConv = ADC_SOFTWARE_START;
   hadc1.Init.DataAlign = ADC_DATAALIGN_RIGHT;
   hadc1.Init.NbrOfConversion = 1;
-  hadc1.Init.DMAContinuousRequests = DISABLE;
+  hadc1.Init.DMAContinuousRequests = ENABLE;
   hadc1.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
   hadc1.Init.LowPowerAutoWait = DISABLE;
   hadc1.Init.Overrun = ADC_OVR_DATA_OVERWRITTEN;
@@ -435,7 +587,7 @@ static void MX_ADC1_Init(void)
   sConfig.Channel = ADC_CHANNEL_1;
   sConfig.Rank = ADC_REGULAR_RANK_1;
   sConfig.SingleDiff = ADC_SINGLE_ENDED;
-  sConfig.SamplingTime = ADC_SAMPLETIME_1CYCLE_5;
+  sConfig.SamplingTime = ADC_SAMPLETIME_61CYCLES_5;
   sConfig.OffsetNumber = ADC_OFFSET_NONE;
   sConfig.Offset = 0;
   if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
@@ -493,6 +645,7 @@ static void MX_DAC1_Init(void)
   */
 static void MX_USART2_UART_Init(void)
 {
+
   /* USER CODE BEGIN USART2_Init 0 */
 
   /* USER CODE END USART2_Init 0 */
@@ -517,6 +670,23 @@ static void MX_USART2_UART_Init(void)
   /* USER CODE BEGIN USART2_Init 2 */
 
   /* USER CODE END USART2_Init 2 */
+
+}
+
+/**
+  * Enable DMA controller clock
+  */
+static void MX_DMA_Init(void)
+{
+
+  /* DMA controller clock enable */
+  __HAL_RCC_DMA1_CLK_ENABLE();
+
+  /* DMA interrupt init */
+  /* DMA1_Channel1_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Channel1_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Channel1_IRQn);
+
 }
 
 /**
