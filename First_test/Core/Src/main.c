@@ -48,19 +48,96 @@ ADC_HandleTypeDef hadc1;
 DMA_HandleTypeDef hdma_adc1;
 
 DAC_HandleTypeDef hdac1;
+DMA_HandleTypeDef hdma_dac1_ch1;
+
+TIM_HandleTypeDef htim2;
 
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
-#define MAX_DAC_NUMBER 4095
+//Constants
 
 const int CLOCK_SPEED = 72000000; //Needed to measure time using clock cycles passed
 const int RAM_SIZE = 80000; //kB
+const int MAX_SAMPLES = 25000; //Uses 50kB of memory, value here must match the size of the 'data' array on line 68
 const double ADC_CYCLES = 61.5; //Set in .ioc
+const int TIMER_FREQ_TIMES_ARR = 560000; //TIM2->ARR = 40 gives 14kHz
 
-int debug = 1;
+//AFG LUTs
+uint32_t LUT_SineWave[128] = {
+    2048, 2149, 2250, 2350, 2450, 2549, 2646, 2742, 2837, 2929, 3020, 3108, 3193, 3275, 3355,
+    3431, 3504, 3574, 3639, 3701, 3759, 3812, 3861, 3906, 3946, 3982, 4013, 4039, 4060, 4076,
+    4087, 4094, 4095, 4091, 4082, 4069, 4050, 4026, 3998, 3965, 3927, 3884, 3837, 3786, 3730,
+    3671, 3607, 3539, 3468, 3394, 3316, 3235, 3151, 3064, 2975, 2883, 2790, 2695, 2598, 2500,
+    2400, 2300, 2199, 2098, 1997, 1896, 1795, 1695, 1595, 1497, 1400, 1305, 1212, 1120, 1031,
+    944, 860, 779, 701, 627, 556, 488, 424, 365, 309, 258, 211, 168, 130, 97,
+    69, 45, 26, 13, 4, 0, 1, 8, 19, 35, 56, 82, 113, 149, 189,
+    234, 283, 336, 394, 456, 521, 591, 664, 740, 820, 902, 987, 1075, 1166, 1258,
+    1353, 1449, 1546, 1645, 1745, 1845, 1946, 2047
+};
 
-const int max_samples = 25000; //Uses 50kB of memory
+uint32_t LUT_SquareWave[128] = {
+	4095, 4095, 4095, 4095, 4095, 4095, 4095, 4095, 4095, 4095, 4095, 4095, 4095, 4095, 4095,
+	4095, 4095, 4095, 4095, 4095, 4095, 4095, 4095, 4095, 4095, 4095, 4095, 4095, 4095, 4095,
+	4095, 4095, 4095, 4095, 4095, 4095, 4095, 4095, 4095, 4095, 4095, 4095, 4095, 4095, 4095,
+	4095, 4095, 4095, 4095, 4095, 4095, 4095, 4095, 4095, 4095, 4095, 4095, 4095, 4095, 4095,
+	0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,
+    0,    0,    0,    0,    0,    0,    0,    0
+};
+
+uint32_t LUT_SawtoothWave[128] = {
+		0 , 32 , 64 , 96 , 128 , 160 , 192 , 224 , 256 , 288 , 320 , 352 , 384 , 416 , 448 ,
+		480 , 512 , 544 , 576 , 608 , 640 , 672 , 704 , 736 , 768 , 800 , 832 , 864 , 896 , 928 ,
+		960 , 992 , 1024 , 1056 , 1088 , 1120 , 1152 , 1184 , 1216 , 1248 , 1280 , 1312 , 1344 , 1376 , 1408 ,
+		1440 , 1472 , 1504 , 1536 , 1568 , 1600 , 1632 , 1664 , 1696 , 1728 , 1760 , 1792 , 1824 , 1856 , 1888 ,
+		1920 , 1952 , 1984 , 2016 , 2048 , 2080 , 2112 , 2144 , 2176 , 2208 , 2240 , 2272 , 2304 , 2336 , 2368 ,
+		2400 , 2432 , 2464 , 2496 , 2528 , 2560 , 2592 , 2624 , 2656 , 2688 , 2720 , 2752 , 2784 , 2816 , 2848 ,
+		2880 , 2912 , 2944 , 2976 , 3008 , 3040 , 3072 , 3104 , 3136 , 3168 , 3200 , 3232 , 3264 , 3296 , 3328 ,
+		3360 , 3392 , 3424 , 3456 , 3488 , 3520 , 3552 , 3584 , 3616 , 3648 , 3680 , 3712 , 3744 , 3776 , 3808 ,
+		3840 , 3872 , 3904 , 3936 , 3968 , 4000 , 4032 , 4064
+};
+
+
+uint32_t LUT_Noise[128] = {
+		1902 , 3273 , 943 , 2996 , 420 , 2843 , 431 , 2115 , 2842 , 2741 , 3069 , 1969 , 3296 , 2452 , 839 ,
+		98 , 1995 , 19 , 1570 , 2901 , 318 , 2679 , 1099 , 3934 , 2505 , 2468 , 748 , 140 , 1315 , 3569 ,
+		2520 , 1267 , 1880 , 3975 , 657 , 3442 , 705 , 2692 , 2646 , 1376 , 3907 , 2459 , 3391 , 260 , 247 ,
+		518 , 786 , 2521 , 2513 , 873 , 956 , 3123 , 66 , 2171 , 2638 , 180 , 2882 , 3821 , 1959 , 1819 ,
+		3543 , 2860 , 1604 , 3692 , 1688 , 1438 , 3057 , 537 , 1264 , 2576 , 1599 , 2878 , 1227 , 3039 , 2240 ,
+		480 , 2489 , 1627 , 545 , 1141 , 1922 , 2943 , 1646 , 2799 , 1461 , 3330 , 1175 , 1862 , 2699 , 739 ,
+		1917 , 2667 , 3685 , 2644 , 349 , 1478 , 1420 , 2970 , 2330 , 3466 , 2097 , 3922 , 2325 , 2162 , 3460 ,
+		846 , 787 , 3915 , 2358 , 1600 , 319 , 4079 , 3519 , 149 , 2404 , 206 , 897 , 1054 , 1648 , 2976 ,
+		328 , 3104 , 17 , 839 , 1308 , 1621 , 367 , 2656
+};
+
+uint32_t LUT_CurrentWave[128] = {
+    2048, 2149, 2250, 2350, 2450, 2549, 2646, 2742, 2837, 2929, 3020, 3108, 3193, 3275, 3355,
+    3431, 3504, 3574, 3639, 3701, 3759, 3812, 3861, 3906, 3946, 3982, 4013, 4039, 4060, 4076,
+    4087, 4094, 4095, 4091, 4082, 4069, 4050, 4026, 3998, 3965, 3927, 3884, 3837, 3786, 3730,
+    3671, 3607, 3539, 3468, 3394, 3316, 3235, 3151, 3064, 2975, 2883, 2790, 2695, 2598, 2500,
+    2400, 2300, 2199, 2098, 1997, 1896, 1795, 1695, 1595, 1497, 1400, 1305, 1212, 1120, 1031,
+    944, 860, 779, 701, 627, 556, 488, 424, 365, 309, 258, 211, 168, 130, 97,
+    69, 45, 26, 13, 4, 0, 1, 8, 19, 35, 56, 82, 113, 149, 189,
+    234, 283, 336, 394, 456, 521, 591, 664, 740, 820, 902, 987, 1075, 1166, 1258,
+    1353, 1449, 1546, 1645, 1745, 1845, 1946, 2047
+}; //AFG defaults to sinewave
+
+//Global variables, can be changed from command line
+
+int debug = 0;
+
+int resolution_x = 1920;
+int resolution_y = 1080; //Unused
+
+double sample_time = 2; //in miliseconds, current maximum is 25
+
+int AFG_Freq = 0; //Set to >0 to turn on
+
+//Data buffer
+
 short data[25000]; //Large arrays can't be created during runtime
 
 volatile int sample_completed = 0; //Used in getWaveform and the ADC IRQ function to communicate between threads
@@ -74,6 +151,7 @@ static void MX_DMA_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_ADC1_Init(void);
 static void MX_DAC1_Init(void);
+static void MX_TIM2_Init(void);
 /* USER CODE BEGIN PFP */
 
 
@@ -129,7 +207,7 @@ void printWaveform(short data[], int size)
 {
 	for(int i = 0; i<size; i++)
 	{
-		printStr("|");
+		printStr(",");
 		printInt(data[i]);
 	}
 }
@@ -204,15 +282,39 @@ short readADC()
 	return value;
 }
 
+int measureFrequency(short* data, int samples_taken, double timeframe, int trigger_level)
+{
+	int high = 0;
+	int cycles = 0;
+	for(int i = 0; i<samples_taken; i++)
+	{
+		if(high == 0)
+		{
+			if(data[i] > trigger_level)
+			{
+				high = 1;
+			}
+		}
+		else
+		{
+			if(data[i] < trigger_level)
+			{
+				high = 0;
+				cycles++;
+			}
+		}
+	}
+	return round(cycles / (timeframe/1000));
+}
 
 /**
  * Either extrapolates between samples to fit resolution_x or uses multiple samples per pixel
  */
-void compressWaveform(short* data, short *newdata, int samples_taken, int resolution_x)
+void compressWaveform(short* data, short *newdata, int samples_taken, int resolution_x, int output_offset)
 {
 	for(int current_pixel = 0; current_pixel<resolution_x; current_pixel++)
 	{
-		newdata[current_pixel] = data[(int)(((double)current_pixel/resolution_x)*samples_taken)];
+		newdata[current_pixel+output_offset] = data[(int)(((double)current_pixel/resolution_x)*samples_taken)];
 	}
 	/*
 	int current_pixel = 0;
@@ -228,7 +330,6 @@ void compressWaveform(short* data, short *newdata, int samples_taken, int resolu
 		current_sample++;
 	}*/
 }
-
 
 /**
  * Get the set amount of samples in the timeframe, and store in data
@@ -260,8 +361,8 @@ void getWaveform(short* data_out, int resolution_x, double sample_time)
 	//printInt(samples_needed);
 	//int samples_needed = (double)samples_per_ms*timeframe;
 
-	int samples_needed = (sample_time/25.1)*max_samples; //At 61.5 cycles per reading, 25000 samples are taken in 25.1ms
-	if(samples_needed < max_samples)
+	int samples_needed = (sample_time/25.1)*MAX_SAMPLES; //At 61.5 cycles per reading, 25000 samples are taken in 25.1ms
+	if(samples_needed < MAX_SAMPLES)
 	{
 		if(debug)
 		{
@@ -298,7 +399,58 @@ void getWaveform(short* data_out, int resolution_x, double sample_time)
 		//printStr("Data:");
 		//printInt(data[0]);
 
-		compressWaveform(data, data_out, samples_needed, resolution_x);
+		compressWaveform(data, data_out, samples_needed, resolution_x, 0);
+	}
+	else
+	{
+		if(debug)
+		{
+			printStr("mode 2\n\r");
+			printInt(samples_needed);
+			printStr(" samples needed\n\r");
+		}
+		double datasets_needed = (double)samples_needed/MAX_SAMPLES;
+		int datasets_done = 0;
+		int samples_per_dataset = ((double)MAX_SAMPLES/samples_needed)*resolution_x;
+		while(datasets_done < datasets_needed)
+		{
+			sample_completed = 0;
+			if(datasets_needed - datasets_done > 1)
+			{
+
+				HAL_ADC_Start_DMA(&hadc1, (uint32_t*)data, MAX_SAMPLES);
+				//unsigned long t1 = DWT->CYCCNT; //32400
+				while(sample_completed == 0)
+				{
+					int a = 1;
+				}
+				//unsigned long time2 = (DWT->CYCCNT);
+				HAL_ADC_Stop_DMA(&hadc1);
+				printInt(samples_per_dataset);
+				compressWaveform(data, data_out, MAX_SAMPLES, samples_per_dataset, datasets_done * samples_per_dataset);
+				printInt(data_out[0]);
+			}
+			else
+			{
+
+				int samples_current_dataset = MAX_SAMPLES*(datasets_needed - datasets_done);
+				HAL_ADC_Start_DMA(&hadc1, (uint32_t*)data, samples_current_dataset);
+				//unsigned long t1 = DWT->CYCCNT; //32400
+				while(sample_completed == 0)
+				{
+					int a = 1;
+				}
+				//unsigned long time2 = (DWT->CYCCNT);
+				HAL_ADC_Stop_DMA(&hadc1);
+				compressWaveform(data, data_out, samples_current_dataset, samples_per_dataset, datasets_done * samples_per_dataset);
+			}
+			datasets_done++;
+			/*
+			printStr("dataset done");
+			printInt(datasets_done);
+			printStr(" out of ");
+			printInt(datasets_needed);*/
+		}
 	}
 }
 
@@ -311,6 +463,54 @@ void ADC_IRQHandler()
 {
     HAL_ADC_IRQHandler(&hadc1);
 }
+
+void changeAFGWaveform(char* name)
+{
+	if(strcmp(name, "square") == 0)
+	{
+		for(int i = 0; i<128; i++)
+		{
+			LUT_CurrentWave[i] = LUT_SquareWave[i];
+		}
+	}
+	else if(strcmp(name, "sine") == 0)
+	{
+		for(int i = 0; i<128; i++)
+		{
+			LUT_CurrentWave[i] = LUT_SineWave[i];
+		}
+	}
+	else if(strcmp(name, "sawtooth") == 0)
+	{
+		for(int i = 0; i<128; i++)
+		{
+			LUT_CurrentWave[i] = LUT_SawtoothWave[i];
+		}
+	}
+	else if(strcmp(name, "noise") == 0)
+	{
+		for(int i = 0; i<128; i++)
+		{
+			LUT_CurrentWave[i] = LUT_Noise[i];
+		}
+	}
+	else
+	{
+		printStr("Invalid waveform name");
+	}
+}
+
+void startAFG()
+{
+    HAL_DAC_Start_DMA(&hdac1, DAC_CHANNEL_1, (uint32_t*)LUT_CurrentWave, 128, DAC_ALIGN_12B_R);
+    HAL_TIM_Base_Start(&htim2);
+}
+
+void stopAFG()
+{
+	HAL_DAC_Stop_DMA(&hdac1, DAC_CHANNEL_1);
+}
+
 /*
 void miliSleep(int sleeptime, int sleepcal)
 {
@@ -348,10 +548,6 @@ int main(void)
 {
   /* USER CODE BEGIN 1 */
 
-  int resolution_x = 1920;
-  int resolution_y = 1080; //Unused
-
-  double sample_time = 25; //in miliseconds, current maximum is 25
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -384,6 +580,7 @@ int main(void)
   MX_USART2_UART_Init();
   MX_ADC1_Init();
   MX_DAC1_Init();
+  MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */
@@ -411,6 +608,7 @@ int main(void)
 		  }
 		  getWaveform(newdata, resolution_x, sample_time);
 		  printWaveform(newdata, resolution_x);
+		  printInt(measureFrequency(newdata, 1920, sample_time, 3000));
 	  }
 	  else if(input[0] == 'S') //Set variable
 	  {
@@ -463,6 +661,32 @@ int main(void)
 				  sample_time = newval;
 			  }
 		  }
+		  else if(strcmp(variable_name, "afg_freq") == 0)
+		  {
+			  char *endptr;
+			  int newval = strtol(variable_value, &endptr, 10);
+			  if(endptr == variable_value)
+			  {
+				  printStr("Invalid number");
+			  }
+			  else
+			  {
+				  if(newval>0)
+				  {
+					  TIM2->ARR = round(TIMER_FREQ_TIMES_ARR/newval);
+					  AFG_Freq = newval;
+					  startAFG();
+				  }
+				  else
+				  {
+					  stopAFG();
+				  }
+			  }
+		  }
+		  else if(strcmp(variable_name, "afg_waveform") == 0)
+		  {
+			  changeAFGWaveform(variable_value);
+		  }
 		  else if(strcmp(variable_name, "DEBUG") == 0)
 		  {
 			  char *endptr;
@@ -478,11 +702,13 @@ int main(void)
 		  }
 		  else
 		  {
-			  printStr("Variable not found");
+			  printStr("Variable not found. Valid variables are resolution_x, sample_time, afg_freq, afg_waveform and DEBUG");
 		  }
 	  }
-
-	  //HAL_Delay(100000);
+	  else
+	  {
+		  printStr("Invalid command. Use A to acquire data or S to set a variable");
+	  }
   }
     /* USER CODE END WHILE */
 
@@ -528,9 +754,11 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
-  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_USART2|RCC_PERIPHCLK_ADC12;
+  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_USART2|RCC_PERIPHCLK_ADC12
+                              |RCC_PERIPHCLK_TIM2;
   PeriphClkInit.Usart2ClockSelection = RCC_USART2CLKSOURCE_PCLK1;
   PeriphClkInit.Adc12ClockSelection = RCC_ADC12PLLCLK_DIV1;
+  PeriphClkInit.Tim2ClockSelection = RCC_TIM2CLK_HCLK;
   if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
   {
     Error_Handler();
@@ -626,7 +854,7 @@ static void MX_DAC1_Init(void)
   }
   /** DAC channel OUT1 config
   */
-  sConfig.DAC_Trigger = DAC_TRIGGER_NONE;
+  sConfig.DAC_Trigger = DAC_TRIGGER_T2_TRGO;
   sConfig.DAC_OutputBuffer = DAC_OUTPUTBUFFER_ENABLE;
   if (HAL_DAC_ConfigChannel(&hdac1, &sConfig, DAC_CHANNEL_1) != HAL_OK)
   {
@@ -635,6 +863,51 @@ static void MX_DAC1_Init(void)
   /* USER CODE BEGIN DAC1_Init 2 */
 
   /* USER CODE END DAC1_Init 2 */
+
+}
+
+/**
+  * @brief TIM2 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM2_Init(void)
+{
+
+  /* USER CODE BEGIN TIM2_Init 0 */
+
+  /* USER CODE END TIM2_Init 0 */
+
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+
+  /* USER CODE BEGIN TIM2_Init 1 */
+
+  /* USER CODE END TIM2_Init 1 */
+  htim2.Instance = TIM2;
+  htim2.Init.Prescaler = 0;
+  htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim2.Init.Period = 624;
+  htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim2, &sClockSourceConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_UPDATE;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim2, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM2_Init 2 */
+
+  /* USER CODE END TIM2_Init 2 */
 
 }
 
@@ -654,7 +927,7 @@ static void MX_USART2_UART_Init(void)
 
   /* USER CODE END USART2_Init 1 */
   huart2.Instance = USART2;
-  huart2.Init.BaudRate = 115200;
+  huart2.Init.BaudRate = 1843200;
   huart2.Init.WordLength = UART_WORDLENGTH_8B;
   huart2.Init.StopBits = UART_STOPBITS_1;
   huart2.Init.Parity = UART_PARITY_NONE;
@@ -686,6 +959,9 @@ static void MX_DMA_Init(void)
   /* DMA1_Channel1_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA1_Channel1_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(DMA1_Channel1_IRQn);
+  /* DMA1_Channel3_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Channel3_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Channel3_IRQn);
 
 }
 
