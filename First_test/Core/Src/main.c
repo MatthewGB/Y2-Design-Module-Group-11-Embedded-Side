@@ -136,6 +136,7 @@ int resolution_y = 1080; //Unused
 double sample_time = 2; //in miliseconds, current maximum is 25
 
 int AFG_Freq = 0; //Set to >0 to turn on
+int AFG_Amplitude = 0; //Amplitude in mV, peak to peak
 
 //Data buffer
 
@@ -471,6 +472,25 @@ void ADC_IRQHandler()
     HAL_ADC_IRQHandler(&hadc1);
 }
 
+void afgAmplitudeAdjustment(int new_amplitude)
+{
+	AFG_Amplitude = new_amplitude;
+	float ratio = AFG_Amplitude/3300.0f;
+	printInt(ratio*100);
+	for(int i = 0; i<128; i++)
+	{
+		int previous_amplitude = LUT_CurrentWave[i];
+		if(previous_amplitude > 2048)
+		{
+			LUT_CurrentWave[i] = 2048+((previous_amplitude-2048)*ratio);
+		}
+		else
+		{
+			LUT_CurrentWave[i] = 2048-((2048-previous_amplitude)*ratio);
+		}
+	}
+}
+
 void changeAFGWaveform(char* name)
 {
 	if(strcmp(name, "square") == 0)
@@ -691,6 +711,19 @@ int main(void)
 				  }
 			  }
 		  }
+		  else if(strcmp(variable_name, "afg_amplitude") == 0)
+		  {
+			  char *endptr;
+			  int newval = strtol(variable_value, &endptr, 10);
+			  if(endptr == variable_value)
+			  {
+				  printStr("Invalid number");
+			  }
+			  else
+			  {
+				  afgAmplitudeAdjustment(newval);
+			  }
+		  }
 		  else if(strcmp(variable_name, "afg_waveform") == 0)
 		  {
 			  changeAFGWaveform(variable_value);
@@ -710,7 +743,7 @@ int main(void)
 		  }
 		  else
 		  {
-			  printStr("Variable not found. Valid variables are resolution_x, sample_time, afg_freq, afg_waveform and DEBUG");
+			  printStr("Variable not found. Valid variables are resolution_x, sample_time, afg_freq, afg_waveform, afg_amplitude and DEBUG");
 		  }
 	  }
 	  else
