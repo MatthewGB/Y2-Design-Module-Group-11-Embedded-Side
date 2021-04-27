@@ -138,6 +138,9 @@ double sample_time = 2; //in miliseconds, current maximum is 25
 int AFG_Freq = 0; //Set to >0 to turn on
 int AFG_Amplitude = 0; //Amplitude in mV, peak to peak
 
+int trigger_level = 2048;
+int trigger_rising = 1;
+
 //Data buffer
 
 short data[25000]; //Large arrays can't be created during runtime
@@ -353,6 +356,34 @@ void getDataAndWait(short* data, int samples)
 	HAL_ADC_Stop_DMA(&hadc1);
 }
 
+void getTriggeredWaveform(short* data_out, int resolution_x, double sample_time)
+{
+
+	HAL_ADC_Start(&hadc1);
+	while(1)
+	{
+		HAL_ADC_PollForConversion(&hadc1, 10);
+		uint32_t value = HAL_ADC_GetValue(&hadc1);
+		if(trigger_rising == 1)
+		{
+			if(value > trigger_level)
+			{
+				HAL_ADC_Stop(&hadc1);
+				break;
+			}
+		}
+		else
+		{
+			if(value < trigger_level)
+			{
+				HAL_ADC_Stop(&hadc1);
+				break;
+			}
+		}
+	}
+	getWaveform(data_out, resolution_x, sample_time);
+}
+
 /**
  * Get the set amount of samples in the timeframe, and store in data
  */
@@ -476,7 +507,6 @@ void afgAmplitudeAdjustment(int new_amplitude)
 {
 	AFG_Amplitude = new_amplitude;
 	float ratio = AFG_Amplitude/3300.0f;
-	printInt(ratio*100);
 	for(int i = 0; i<128; i++)
 	{
 		int previous_amplitude = LUT_CurrentWave[i];
@@ -638,6 +668,17 @@ int main(void)
 		  printWaveform(newdata, resolution_x);
 		  //printInt(measureFrequency(newdata, 1920, sample_time, 3000));
 	  }
+	  if(input[0] == 'T') //Acquire data on trigger
+	  {
+		  short newdata[resolution_x];
+		  for(int i = 0; i<resolution_x; i++)
+		  {
+			  newdata[i] = 0;
+		  }
+		  getTriggeredWaveform(newdata, resolution_x, sample_time);
+		  printWaveform(newdata, resolution_x);
+		  //printInt(measureFrequency(newdata, 1920, sample_time, 3000));
+	  }
 	  else if(input[0] == 'S') //Set variable
 	  {
 		  if(debug) { printStr("SetVar"); }
@@ -687,6 +728,32 @@ int main(void)
 			  else
 			  {
 				  sample_time = newval;
+			  }
+		  }
+		  else if(strcmp(variable_name, "trigger_level") == 0)
+		  {
+			  char *endptr;
+			  int newval = strtol(variable_value, &endptr, 10);
+			  if(endptr == variable_value || newval > 4097)
+			  {
+				  printStr("Invalid number, must be <= 4096");
+			  }
+			  else
+			  {
+				  trigger_level = newval;
+			  }
+		  }
+		  else if(strcmp(variable_name, "trigger_rising") == 0)
+		  {
+			  char *endptr;
+			  int newval = strtol(variable_value, &endptr, 10);
+			  if(endptr == variable_value || newval > 1)
+			  {
+				  printStr("Invalid number, must be 1 for rising or 0 for falling edge");
+			  }
+			  else
+			  {
+				  trigger_rising = newval;
 			  }
 		  }
 		  else if(strcmp(variable_name, "afg_freq") == 0)
@@ -1023,7 +1090,7 @@ static void MX_USART2_UART_Init(void)
 
   /* USER CODE END USART2_Init 1 */
   huart2.Instance = USART2;
-  huart2.Init.BaudRate = 115200;
+  huart2.Init.BaudRate = 1843200;
   huart2.Init.WordLength = UART_WORDLENGTH_8B;
   huart2.Init.StopBits = UART_STOPBITS_1;
   huart2.Init.Parity = UART_PARITY_NONE;
