@@ -53,6 +53,7 @@ DAC_HandleTypeDef hdac1;
 DMA_HandleTypeDef hdma_dac1_ch1;
 
 TIM_HandleTypeDef htim2;
+TIM_HandleTypeDef htim3;
 
 UART_HandleTypeDef huart2;
 
@@ -64,6 +65,8 @@ const int RAM_SIZE = 80000; //kB
 const int MAX_SAMPLES = 25000; //Uses 50kB of memory, value here must match the size of the 'data' array on line 68
 const double ADC_CYCLES = 61.5; //Set in .ioc
 const int TIMER_FREQ_TIMES_ARR = 560000; //TIM2->ARR = 40 gives 14kHz
+
+uint32_t DAC_Offset[2] = {484, 2458};
 
 //AFG LUTs
 uint32_t LUT_SineWave[128] = {
@@ -141,11 +144,15 @@ int AFG_Amplitude = 0; //Amplitude in mV, peak to peak
 int trigger_level = 2048;
 int trigger_rising = 1;
 
+int amplifier_x10 = 0;
+
 //Data buffer
 
 short data[25000]; //Large arrays can't be created during runtime
 
 volatile int sample_completed = 0; //Used in getWaveform and the ADC IRQ function to communicate between threads
+
+int GPIO_time = 0;
 
 /* USER CODE END PV */
 
@@ -158,6 +165,7 @@ static void MX_ADC1_Init(void);
 static void MX_DAC1_Init(void);
 static void MX_TIM2_Init(void);
 static void MX_ADC2_Init(void);
+static void MX_TIM3_Init(void);
 /* USER CODE BEGIN PFP */
 
 
@@ -237,7 +245,7 @@ int readSerial(char* outputString, int readsize, int timeout, int printchar)
 	{
 		  HAL_UART_Receive(&huart2, (uint8_t *)rxedChar, 1, 100);
 
-		  if (rxedChar[0] == '\n' || rxedChar[0] == '\r') {
+		  if (rxedChar[0] == '\n' || rxedChar[0] == '\r' || rxedChar[0] == ' ') {
 			  break;
 		  }
 
@@ -414,7 +422,7 @@ void getWaveform(short* data_out, int resolution_x, double sample_time)
 	//printInt(samples_needed);
 	//int samples_needed = (double)samples_per_ms*timeframe;
 
-	int samples_needed = (sample_time/25.1)*MAX_SAMPLES; //At 61.5 cycles per reading, 25000 samples are taken in 25.1ms
+	int samples_needed = (sample_time/7.96)*MAX_SAMPLES; //At 19.5 cycles per reading, 25000 samples are taken in 25.1ms
 	if(samples_needed < MAX_SAMPLES)
 	{
 		if(debug)
@@ -470,7 +478,6 @@ void getWaveform(short* data_out, int resolution_x, double sample_time)
 			sample_completed = 0;
 			if(datasets_needed - datasets_done > 1)
 			{
-
 				getDataAndWait(data, MAX_SAMPLES);
 				//printInt(samples_per_dataset);
 				compressWaveform(data, data_out, MAX_SAMPLES, samples_per_dataset, datasets_done * samples_per_dataset);
@@ -478,7 +485,6 @@ void getWaveform(short* data_out, int resolution_x, double sample_time)
 			}
 			else
 			{
-
 				int samples_current_dataset = MAX_SAMPLES*(datasets_needed - datasets_done);
 				getDataAndWait(data, samples_current_dataset);
 				compressWaveform(data, data_out, samples_current_dataset, samples_per_dataset, datasets_done * samples_per_dataset);
@@ -568,6 +574,27 @@ void stopAFG()
 	HAL_DAC_Stop_DMA(&hdac1, DAC_CHANNEL_1);
 }
 
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+  // Check which version of the timer triggered this callback and toggle LED
+  if (htim == &htim3)
+  {
+	  if(GPIO_time == 101)
+	  {
+		  GPIO_time = 0;
+		  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_SET);
+	  }
+	  else if(GPIO_time == 65 && amplifier_x10 == 0)
+	  {
+		  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_RESET);
+	  }
+	  else if(GPIO_time == 10 && amplifier_x10 == 1)
+	  {
+		  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_RESET);
+	  }
+	  GPIO_time++;
+  }
+}
 /*
 void miliSleep(int sleeptime, int sleepcal)
 {
@@ -639,17 +666,28 @@ int main(void)
   MX_DAC1_Init();
   MX_TIM2_Init();
   MX_ADC2_Init();
+  MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
+
+  HAL_TIM_Base_Start_IT(&htim3);
 
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
 
+  //HAL_DAC_Start(&hdac1, DAC_CHANNEL_2);
+  //HAL_DAC_SetValue(&hdac1, DAC_CHANNEL_2, DAC_ALIGN_12B_R, 4096); //Default to x1 probe mode
+
+  //HAL_DAC_Start_DMA(&hdac1, DAC_CHANNEL_2, DAC_Offset, 2, DAC_ALIGN_12B_R);
+
+  //HAL_TIM_Base_Start(&htim2);
+
   if(debug) { printStr("Ready\n\r"); }
 
   while(1)
   {
+
 	  printStr(">");
 	  char input[2];
 	  while(readSerial(input, 1, 100000, debug) == 1)
@@ -754,6 +792,28 @@ int main(void)
 			  else
 			  {
 				  trigger_rising = newval;
+			  }
+		  }
+		  else if(strcmp(variable_name, "amplifier_x10") == 0)
+		  {
+			  char *endptr;
+			  int newval = strtol(variable_value, &endptr, 10);
+			  if(endptr == variable_value || newval > 1)
+			  {
+				  printStr("Invalid number, must be 1 for x10, 0 for x1");
+			  }
+			  else
+			  {
+				  if(newval == 1)
+				  {
+					  amplifier_x10 = 1;
+					  HAL_DAC_SetValue(&hdac1, DAC_CHANNEL_2, DAC_ALIGN_12B_R, DAC_Offset[1]);
+				  }
+				  else
+				  {
+					  amplifier_x10 = 0;
+					  HAL_DAC_SetValue(&hdac1, DAC_CHANNEL_2, DAC_ALIGN_12B_R, DAC_Offset[0]);
+				  }
 			  }
 		  }
 		  else if(strcmp(variable_name, "afg_freq") == 0)
@@ -863,10 +923,11 @@ void SystemClock_Config(void)
     Error_Handler();
   }
   PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_USART2|RCC_PERIPHCLK_ADC12
-                              |RCC_PERIPHCLK_TIM2;
+                              |RCC_PERIPHCLK_TIM2|RCC_PERIPHCLK_TIM34;
   PeriphClkInit.Usart2ClockSelection = RCC_USART2CLKSOURCE_PCLK1;
   PeriphClkInit.Adc12ClockSelection = RCC_ADC12PLLCLK_DIV1;
   PeriphClkInit.Tim2ClockSelection = RCC_TIM2CLK_HCLK;
+  PeriphClkInit.Tim34ClockSelection = RCC_TIM34CLK_HCLK;
   if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
   {
     Error_Handler();
@@ -923,7 +984,7 @@ static void MX_ADC1_Init(void)
   sConfig.Channel = ADC_CHANNEL_1;
   sConfig.Rank = ADC_REGULAR_RANK_1;
   sConfig.SingleDiff = ADC_SINGLE_ENDED;
-  sConfig.SamplingTime = ADC_SAMPLETIME_61CYCLES_5;
+  sConfig.SamplingTime = ADC_SAMPLETIME_19CYCLES_5;
   sConfig.OffsetNumber = ADC_OFFSET_NONE;
   sConfig.Offset = 0;
   if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
@@ -1075,6 +1136,51 @@ static void MX_TIM2_Init(void)
 }
 
 /**
+  * @brief TIM3 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM3_Init(void)
+{
+
+  /* USER CODE BEGIN TIM3_Init 0 */
+
+  /* USER CODE END TIM3_Init 0 */
+
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+
+  /* USER CODE BEGIN TIM3_Init 1 */
+
+  /* USER CODE END TIM3_Init 1 */
+  htim3.Instance = TIM3;
+  htim3.Init.Prescaler = 0;
+  htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim3.Init.Period = 624;
+  htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim3) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim3, &sClockSourceConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_UPDATE;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim3, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM3_Init 2 */
+
+  /* USER CODE END TIM3_Init 2 */
+
+}
+
+/**
   * @brief USART2 Initialization Function
   * @param None
   * @retval None
@@ -1148,7 +1254,7 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_RESET);
 
   /*Configure GPIO pin : B1_Pin */
   GPIO_InitStruct.Pin = B1_Pin;
@@ -1156,12 +1262,12 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(B1_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : LD2_Pin */
-  GPIO_InitStruct.Pin = LD2_Pin;
+  /*Configure GPIO pin : PA5 */
+  GPIO_InitStruct.Pin = GPIO_PIN_5;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(LD2_GPIO_Port, &GPIO_InitStruct);
+  GPIO_InitStruct.Pull = GPIO_PULLDOWN;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
 }
 
