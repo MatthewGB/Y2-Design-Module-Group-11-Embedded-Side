@@ -576,6 +576,7 @@ void stopAFG()
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
+	/*
   // Check which version of the timer triggered this callback and toggle LED
   if (htim == &htim3)
   {
@@ -593,7 +594,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 		  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_RESET);
 	  }
 	  GPIO_time++;
-  }
+  }*/
 }
 /*
 void miliSleep(int sleeptime, int sleepcal)
@@ -669,7 +670,10 @@ int main(void)
   MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
 
-  HAL_TIM_Base_Start_IT(&htim3);
+  //HAL_TIM_Base_Start_IT(&htim3);
+  HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_3);
+
+  __HAL_TIM_SetCompare(&htim3, TIM_CHANNEL_3, 32);
 
   /* USER CODE END 2 */
 
@@ -706,7 +710,7 @@ int main(void)
 		  printWaveform(newdata, resolution_x);
 		  //printInt(measureFrequency(newdata, 1920, sample_time, 3000));
 	  }
-	  if(input[0] == 'T') //Acquire data on trigger
+	  else if(input[0] == 'T') //Acquire data on trigger
 	  {
 		  short newdata[resolution_x];
 		  for(int i = 0; i<resolution_x; i++)
@@ -807,12 +811,12 @@ int main(void)
 				  if(newval == 1)
 				  {
 					  amplifier_x10 = 1;
-					  HAL_DAC_SetValue(&hdac1, DAC_CHANNEL_2, DAC_ALIGN_12B_R, DAC_Offset[1]);
+					  __HAL_TIM_SetCompare(&htim3, TIM_CHANNEL_3, 5);
 				  }
 				  else
 				  {
 					  amplifier_x10 = 0;
-					  HAL_DAC_SetValue(&hdac1, DAC_CHANNEL_2, DAC_ALIGN_12B_R, DAC_Offset[0]);
+					  __HAL_TIM_SetCompare(&htim3, TIM_CHANNEL_3, 32);
 				  }
 			  }
 		  }
@@ -875,7 +879,10 @@ int main(void)
 	  }
 	  else
 	  {
-		  printStr("Invalid command. Use A to acquire data or S to set a variable");
+		  printStr("'");
+		  printStr(input[0]);
+		  printStr("'");
+		  printStr("is an invalid command. Use A to acquire data or S to set a variable");
 	  }
   }
     /* USER CODE END WHILE */
@@ -1149,14 +1156,15 @@ static void MX_TIM3_Init(void)
 
   TIM_ClockConfigTypeDef sClockSourceConfig = {0};
   TIM_MasterConfigTypeDef sMasterConfig = {0};
+  TIM_OC_InitTypeDef sConfigOC = {0};
 
   /* USER CODE BEGIN TIM3_Init 1 */
 
   /* USER CODE END TIM3_Init 1 */
   htim3.Instance = TIM3;
-  htim3.Init.Prescaler = 0;
+  htim3.Init.Prescaler = 3;
   htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim3.Init.Period = 624;
+  htim3.Init.Period = 50;
   htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim3) != HAL_OK)
@@ -1168,15 +1176,28 @@ static void MX_TIM3_Init(void)
   {
     Error_Handler();
   }
-  sMasterConfig.MasterOutputTrigger = TIM_TRGO_UPDATE;
+  if (HAL_TIM_PWM_Init(&htim3) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
   sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
   if (HAL_TIMEx_MasterConfigSynchronization(&htim3, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sConfigOC.OCMode = TIM_OCMODE_PWM1;
+  sConfigOC.Pulse = 0;
+  sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
+  sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
+  if (HAL_TIM_PWM_ConfigChannel(&htim3, &sConfigOC, TIM_CHANNEL_3) != HAL_OK)
   {
     Error_Handler();
   }
   /* USER CODE BEGIN TIM3_Init 2 */
 
   /* USER CODE END TIM3_Init 2 */
+  HAL_TIM_MspPostInit(&htim3);
 
 }
 
