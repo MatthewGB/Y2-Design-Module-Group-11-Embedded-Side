@@ -395,7 +395,6 @@ int getTriggeredWaveform(short* data_out, int resolution_x, double sample_time)
 		{
 			break;
 		}
-		printInt(interrupted);
 	}
 	if(interrupted == 0)
 	{
@@ -774,7 +773,10 @@ int main(void)
 		  }
 		  else
 		  {
-			  printStr("Cancelled");
+			  if(debug)
+			  {
+				  printStr("Cancelled");
+			  }
 		  }
 		  //printInt(measureFrequency(newdata, 1920, sample_time, 3000));
 	  }
