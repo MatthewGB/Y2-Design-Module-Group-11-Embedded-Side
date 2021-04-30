@@ -712,6 +712,11 @@ int main(void)
 	  }
 	  else if(input[0] == 'T') //Acquire data on trigger
 	  {
+		  printStr(" ");
+		  if(debug)
+		  {
+			  printStr("Waiting for trigger... ");
+		  }
 		  short newdata[resolution_x];
 		  for(int i = 0; i<resolution_x; i++)
 		  {
