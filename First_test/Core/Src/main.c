@@ -404,6 +404,7 @@ int getTriggeredWaveform(short* data_out, int resolution_x, double sample_time)
 	if(interrupted == 0)
 	{
 		getWaveform(data_out, resolution_x, sample_time);
+		HAL_UART_AbortReceive_IT(&huart2);
 		return 1;
 	}
 	else
@@ -631,6 +632,7 @@ void USART2_IRQHandler(void)
   HAL_UART_IRQHandler(&huart2);
   interrupted = 1;
   HAL_ADC_Stop(&hadc1);
+  HAL_UART_AbortReceive_IT(&huart2);
 
   /* USER CODE BEGIN USART2_IRQn 1 */
 
