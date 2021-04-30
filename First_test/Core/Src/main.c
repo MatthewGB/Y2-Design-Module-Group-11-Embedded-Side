@@ -153,6 +153,7 @@ short data[25000]; //Large arrays can't be created during runtime
 volatile int sample_completed = 0; //Used in getWaveform and the ADC IRQ function to communicate between threads
 
 int GPIO_time = 0;
+int interrupted = 1;
 
 /* USER CODE END PV */
 
@@ -364,9 +365,11 @@ void getDataAndWait(short* data, int samples)
 	HAL_ADC_Stop_DMA(&hadc1);
 }
 
-void getTriggeredWaveform(short* data_out, int resolution_x, double sample_time)
+int getTriggeredWaveform(short* data_out, int resolution_x, double sample_time)
 {
-
+	interrupted = 0;
+	char rx[2];
+	HAL_UART_Receive_IT(&huart2,rx,1);
 	HAL_ADC_Start(&hadc1);
 	while(1)
 	{
@@ -388,8 +391,22 @@ void getTriggeredWaveform(short* data_out, int resolution_x, double sample_time)
 				break;
 			}
 		}
+		if(interrupted == 1)
+		{
+			break;
+		}
+		printInt(interrupted);
 	}
-	getWaveform(data_out, resolution_x, sample_time);
+	if(interrupted == 0)
+	{
+		getWaveform(data_out, resolution_x, sample_time);
+		return 1;
+	}
+	else
+	{
+		HAL_UART_AbortReceive_IT(&huart2);
+		return 0;
+	}
 }
 
 /**
@@ -574,6 +591,33 @@ void stopAFG()
 	HAL_DAC_Stop_DMA(&hdac1, DAC_CHANNEL_1);
 }
 
+void USART2_IRQHandler(void)
+{
+	interrupted = 1;
+	HAL_UART_IRQHandler(&huart2);
+}
+
+/*
+void USART2_IRQHandler()
+{
+	printStr("irq");
+	/*
+  if(USART_GetITStatus(PMIC_COM1, USART_IT_RXNE))
+  {
+    char t = USART_ReceiveData(PMIC_COM1);
+
+    //Check if received character is end character
+    if( (t != 'x') && (cnt < MAX_STRLEN) ){
+      received_string[cnt] = t;
+      cnt++;
+    }
+    else{ // otherwise reset the character counter and print the received string
+      cnt = 0;
+      printf("UART Message: %c", received_string);
+    }
+  }
+}
+*/
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
 	/*
@@ -675,6 +719,8 @@ int main(void)
 
   __HAL_TIM_SetCompare(&htim3, TIM_CHANNEL_3, 32);
 
+  __HAL_UART_ENABLE_IT(&huart2, UART_IT_RXNE);
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -722,8 +768,14 @@ int main(void)
 		  {
 			  newdata[i] = 0;
 		  }
-		  getTriggeredWaveform(newdata, resolution_x, sample_time);
-		  printWaveform(newdata, resolution_x);
+		  if(getTriggeredWaveform(newdata, resolution_x, sample_time) == 1)
+		  {
+			  printWaveform(newdata, resolution_x);
+		  }
+		  else
+		  {
+			  printStr("Cancelled");
+		  }
 		  //printInt(measureFrequency(newdata, 1920, sample_time, 3000));
 	  }
 	  else if(input[0] == 'S') //Set variable
