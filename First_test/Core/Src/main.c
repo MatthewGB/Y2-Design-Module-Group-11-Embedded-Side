@@ -54,6 +54,7 @@ DMA_HandleTypeDef hdma_dac1_ch1;
 
 TIM_HandleTypeDef htim2;
 TIM_HandleTypeDef htim3;
+TIM_HandleTypeDef htim4;
 
 UART_HandleTypeDef huart2;
 
@@ -167,6 +168,7 @@ static void MX_DAC1_Init(void);
 static void MX_TIM2_Init(void);
 static void MX_ADC2_Init(void);
 static void MX_TIM3_Init(void);
+static void MX_TIM4_Init(void);
 /* USER CODE BEGIN PFP */
 
 
@@ -368,8 +370,11 @@ void getDataAndWait(short* data, int samples)
 int getTriggeredWaveform(short* data_out, int resolution_x, double sample_time)
 {
 	interrupted = 0;
+
+	//HAL_TIM_Base_Start_IT(&htim4);
 	char rx[2];
 	HAL_UART_Receive_IT(&huart2,rx,1);
+
 	HAL_ADC_Start(&hadc1);
 	while(1)
 	{
@@ -403,7 +408,6 @@ int getTriggeredWaveform(short* data_out, int resolution_x, double sample_time)
 	}
 	else
 	{
-		HAL_UART_AbortReceive_IT(&huart2);
 		return 0;
 	}
 }
@@ -437,7 +441,6 @@ void getWaveform(short* data_out, int resolution_x, double sample_time)
 	//samples_needed = 220000*timeframe*0.001;
 	//printInt(samples_needed);
 	//int samples_needed = (double)samples_per_ms*timeframe;
-
 	int samples_needed = (sample_time/7.96)*MAX_SAMPLES; //At 19.5 cycles per reading, 25000 samples are taken in 25.1ms
 	if(samples_needed < MAX_SAMPLES)
 	{
@@ -456,7 +459,6 @@ void getWaveform(short* data_out, int resolution_x, double sample_time)
 		}
 		unsigned long time2 = (DWT->CYCCNT);
 		HAL_ADC_Stop_DMA(&hadc1);
-
 		//printStr("Time:");
 		//printInt(time2);
 		/*
@@ -590,11 +592,6 @@ void stopAFG()
 	HAL_DAC_Stop_DMA(&hdac1, DAC_CHANNEL_1);
 }
 
-void USART2_IRQHandler(void)
-{
-	interrupted = 1;
-	HAL_UART_IRQHandler(&huart2);
-}
 
 /*
 void USART2_IRQHandler()
@@ -619,25 +616,25 @@ void USART2_IRQHandler()
 */
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
-	/*
-  // Check which version of the timer triggered this callback and toggle LED
-  if (htim == &htim3)
+  // Check which version of the timer triggered this callback
+  if (htim == &htim4)
   {
-	  if(GPIO_time == 101)
-	  {
-		  GPIO_time = 0;
-		  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_SET);
-	  }
-	  else if(GPIO_time == 65 && amplifier_x10 == 0)
-	  {
-		  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_RESET);
-	  }
-	  else if(GPIO_time == 10 && amplifier_x10 == 1)
-	  {
-		  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_RESET);
-	  }
-	  GPIO_time++;
-  }*/
+	  interrupted = 1;
+  }
+}
+
+void USART2_IRQHandler(void)
+{
+  /* USER CODE BEGIN USART2_IRQn 0 */
+
+  /* USER CODE END USART2_IRQn 0 */
+  HAL_UART_IRQHandler(&huart2);
+  interrupted = 1;
+  HAL_ADC_Stop(&hadc1);
+
+  /* USER CODE BEGIN USART2_IRQn 1 */
+
+  /* USER CODE END USART2_IRQn 1 */
 }
 /*
 void miliSleep(int sleeptime, int sleepcal)
@@ -711,14 +708,13 @@ int main(void)
   MX_TIM2_Init();
   MX_ADC2_Init();
   MX_TIM3_Init();
+  MX_TIM4_Init();
   /* USER CODE BEGIN 2 */
 
   //HAL_TIM_Base_Start_IT(&htim3);
   HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_3);
 
   __HAL_TIM_SetCompare(&htim3, TIM_CHANNEL_3, 32);
-
-  __HAL_UART_ENABLE_IT(&huart2, UART_IT_RXNE);
 
   /* USER CODE END 2 */
 
@@ -1257,6 +1253,51 @@ static void MX_TIM3_Init(void)
 
   /* USER CODE END TIM3_Init 2 */
   HAL_TIM_MspPostInit(&htim3);
+
+}
+
+/**
+  * @brief TIM4 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM4_Init(void)
+{
+
+  /* USER CODE BEGIN TIM4_Init 0 */
+
+  /* USER CODE END TIM4_Init 0 */
+
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+
+  /* USER CODE BEGIN TIM4_Init 1 */
+
+  /* USER CODE END TIM4_Init 1 */
+  htim4.Instance = TIM4;
+  htim4.Init.Prescaler = 6000;
+  htim4.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim4.Init.Period = 65535;
+  htim4.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim4.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim4) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim4, &sClockSourceConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim4, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM4_Init 2 */
+
+  /* USER CODE END TIM4_Init 2 */
 
 }
 
