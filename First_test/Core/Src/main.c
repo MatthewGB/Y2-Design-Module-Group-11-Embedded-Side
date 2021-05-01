@@ -331,11 +331,32 @@ void compressWaveform(short* data, short *newdata, int samples_taken, int resolu
 {
 	if(debug)
 	{
-		printStrLn("Compressing waveform...");
+		printStr("Compressing waveform... at offset");
+		printInt(output_offset);
+		printStr("\n\r");
 	}
-	for(int current_pixel = 0; current_pixel<resolution_x; current_pixel++)
+	/*
+	for(int current_pixel = output_offset; current_pixel<resolution_x; current_pixel++)
 	{
-		newdata[current_pixel+output_offset] = data[(int)(((double)current_pixel/resolution_x)*samples_taken)];
+		int sample = data[(int)(((double)current_pixel/resolution_x)*samples_taken)];
+		printStr("1");
+		if(current_pixel+output_offset <= resolution_x)
+		{
+			printInt(current_pixel+output_offset);
+			printStr("\n\r");
+			newdata[current_pixel+output_offset] = sample;
+		}
+		printStr("2");
+	}*/
+	for(int current_pixel = output_offset; current_pixel<resolution_x; current_pixel++)
+	{
+		if(debug)
+		{
+			printStr("\n\r");
+			printInt(current_pixel);
+		}
+		int samplenum = ((float)(current_pixel-output_offset)/(resolution_x-output_offset))*samples_taken;
+		newdata[current_pixel] = data[samplenum];
 	}
 	if(debug)
 	{
@@ -499,14 +520,23 @@ void getWaveform(short* data_out, int resolution_x, double sample_time)
 			{
 				getDataAndWait(data, MAX_SAMPLES);
 				//printInt(samples_per_dataset);
-				compressWaveform(data, data_out, MAX_SAMPLES, samples_per_dataset, datasets_done * samples_per_dataset);
+				compressWaveform(data, data_out, MAX_SAMPLES, (((float)(MAX_SAMPLES*(datasets_done+1))/(samples_needed))*resolution_x), ((float)(MAX_SAMPLES*datasets_done)/(samples_needed))*resolution_x);//datasets_done * samples_per_dataset);
 				//printInt(data_out[0]);
 			}
 			else
 			{
+
+				if(debug)
+				{
+					printStr("Datasets left: ");
+					printInt((int)((datasets_needed - datasets_done)*100));
+					printStr("samples left as %");
+					printInt(((float)(MAX_SAMPLES*datasets_done)/(samples_needed))*100);
+				}
 				int samples_current_dataset = MAX_SAMPLES*(datasets_needed - datasets_done);
 				getDataAndWait(data, samples_current_dataset);
-				compressWaveform(data, data_out, samples_current_dataset, samples_per_dataset, datasets_done * samples_per_dataset);
+				compressWaveform(data, data_out, samples_current_dataset, resolution_x, (((float)(MAX_SAMPLES*datasets_done)/(samples_needed))*resolution_x));
+
 			}
 			datasets_done++;
 			/*
