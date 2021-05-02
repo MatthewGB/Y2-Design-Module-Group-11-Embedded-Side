@@ -141,7 +141,7 @@ int resolution_y = 1080; //Unused
 double sample_time = 2; //in miliseconds, current maximum is 25
 
 int AFG_Freq = 0; //Set to >0 to turn on
-int AFG_Amplitude = 0; //Amplitude in mV, peak to peak
+int AFG_Amplitude = 3300; //Amplitude in mV, peak to peak
 
 int trigger_level = 2048;
 int trigger_rising = 1;

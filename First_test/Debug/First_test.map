@@ -4741,7 +4741,7 @@ LOAD d:/everything2/programming/stm32cubeide_1.5.1/stm32cubeide/plugins/com.st.s
                 0x000000000800bc80                . = ALIGN (0x4)
                 0x000000000800bc80                _sidata = LOADADDR (.data)
 
-.data           0x0000000020000000      0xbf8 load address 0x000000000800bc80
+.data           0x0000000020000000      0xbfc load address 0x000000000800bc80
                 0x0000000020000000                . = ALIGN (0x4)
                 0x0000000020000000                _sdata = .
  *(.data)
@@ -4770,55 +4770,55 @@ LOAD d:/everything2/programming/stm32cubeide_1.5.1/stm32cubeide/plugins/com.st.s
  .data.sample_time
                 0x0000000020000a08        0x8 Core/Src/main.o
                 0x0000000020000a08                sample_time
- .data.trigger_level
+ .data.AFG_Amplitude
                 0x0000000020000a10        0x4 Core/Src/main.o
-                0x0000000020000a10                trigger_level
- .data.trigger_rising
+                0x0000000020000a10                AFG_Amplitude
+ .data.trigger_level
                 0x0000000020000a14        0x4 Core/Src/main.o
-                0x0000000020000a14                trigger_rising
- .data.interrupted
+                0x0000000020000a14                trigger_level
+ .data.trigger_rising
                 0x0000000020000a18        0x4 Core/Src/main.o
-                0x0000000020000a18                interrupted
+                0x0000000020000a18                trigger_rising
+ .data.interrupted
+                0x0000000020000a1c        0x4 Core/Src/main.o
+                0x0000000020000a1c                interrupted
  .data.SystemCoreClock
-                0x0000000020000a1c        0x4 Core/Src/system_stm32f3xx.o
-                0x0000000020000a1c                SystemCoreClock
+                0x0000000020000a20        0x4 Core/Src/system_stm32f3xx.o
+                0x0000000020000a20                SystemCoreClock
  .data.uwTickPrio
-                0x0000000020000a20        0x4 Drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal.o
-                0x0000000020000a20                uwTickPrio
+                0x0000000020000a24        0x4 Drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal.o
+                0x0000000020000a24                uwTickPrio
  .data.uwTickFreq
-                0x0000000020000a24        0x1 Drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal.o
-                0x0000000020000a24                uwTickFreq
- *fill*         0x0000000020000a25        0x3 
+                0x0000000020000a28        0x1 Drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal.o
+                0x0000000020000a28                uwTickFreq
+ *fill*         0x0000000020000a29        0x3 
  .data._impure_ptr
-                0x0000000020000a28        0x4 d:/everything2/programming/stm32cubeide_1.5.1/stm32cubeide/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.7-2018-q2-update.win32_1.5.0.202011040924/tools/bin/../lib/gcc/arm-none-eabi/7.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m/fpv4-sp/hard\libc_nano.a(lib_a-impure.o)
-                0x0000000020000a28                _impure_ptr
+                0x0000000020000a2c        0x4 d:/everything2/programming/stm32cubeide_1.5.1/stm32cubeide/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.7-2018-q2-update.win32_1.5.0.202011040924/tools/bin/../lib/gcc/arm-none-eabi/7.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m/fpv4-sp/hard\libc_nano.a(lib_a-impure.o)
+                0x0000000020000a2c                _impure_ptr
  .data.impure_data
-                0x0000000020000a2c       0x60 d:/everything2/programming/stm32cubeide_1.5.1/stm32cubeide/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.7-2018-q2-update.win32_1.5.0.202011040924/tools/bin/../lib/gcc/arm-none-eabi/7.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m/fpv4-sp/hard\libc_nano.a(lib_a-impure.o)
+                0x0000000020000a30       0x60 d:/everything2/programming/stm32cubeide_1.5.1/stm32cubeide/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.7-2018-q2-update.win32_1.5.0.202011040924/tools/bin/../lib/gcc/arm-none-eabi/7.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m/fpv4-sp/hard\libc_nano.a(lib_a-impure.o)
  .data.__global_locale
-                0x0000000020000a8c      0x16c d:/everything2/programming/stm32cubeide_1.5.1/stm32cubeide/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.7-2018-q2-update.win32_1.5.0.202011040924/tools/bin/../lib/gcc/arm-none-eabi/7.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m/fpv4-sp/hard\libc_nano.a(lib_a-locale.o)
-                0x0000000020000a8c                __global_locale
+                0x0000000020000a90      0x16c d:/everything2/programming/stm32cubeide_1.5.1/stm32cubeide/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.7-2018-q2-update.win32_1.5.0.202011040924/tools/bin/../lib/gcc/arm-none-eabi/7.3.1/../../../../arm-none-eabi/lib/thumb/v7e-m/fpv4-sp/hard\libc_nano.a(lib_a-locale.o)
+                0x0000000020000a90                __global_locale
  *(.RamFunc)
  *(.RamFunc*)
-                0x0000000020000bf8                . = ALIGN (0x4)
-                0x0000000020000bf8                _edata = .
+                0x0000000020000bfc                . = ALIGN (0x4)
+                0x0000000020000bfc                _edata = .
 
-.igot.plt       0x0000000020000bf8        0x0 load address 0x000000000800c878
- .igot.plt      0x0000000020000bf8        0x0 d:/everything2/programming/stm32cubeide_1.5.1/stm32cubeide/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.7-2018-q2-update.win32_1.5.0.202011040924/tools/bin/../lib/gcc/arm-none-eabi/7.3.1/thumb/v7e-m/fpv4-sp/hard/crtbegin.o
-                0x0000000020000bf8                . = ALIGN (0x4)
+.igot.plt       0x0000000020000bfc        0x0 load address 0x000000000800c87c
+ .igot.plt      0x0000000020000bfc        0x0 d:/everything2/programming/stm32cubeide_1.5.1/stm32cubeide/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.7-2018-q2-update.win32_1.5.0.202011040924/tools/bin/../lib/gcc/arm-none-eabi/7.3.1/thumb/v7e-m/fpv4-sp/hard/crtbegin.o
+                0x0000000020000bfc                . = ALIGN (0x4)
 
-.bss            0x0000000020000bf8     0xc680 load address 0x000000000800c878
-                0x0000000020000bf8                _sbss = .
-                0x0000000020000bf8                __bss_start__ = _sbss
+.bss            0x0000000020000bfc     0xc67c load address 0x000000000800c87c
+                0x0000000020000bfc                _sbss = .
+                0x0000000020000bfc                __bss_start__ = _sbss
  *(.bss)
- .bss           0x0000000020000bf8       0x1c d:/everything2/programming/stm32cubeide_1.5.1/stm32cubeide/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.7-2018-q2-update.win32_1.5.0.202011040924/tools/bin/../lib/gcc/arm-none-eabi/7.3.1/thumb/v7e-m/fpv4-sp/hard/crtbegin.o
+ .bss           0x0000000020000bfc       0x1c d:/everything2/programming/stm32cubeide_1.5.1/stm32cubeide/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.7-2018-q2-update.win32_1.5.0.202011040924/tools/bin/../lib/gcc/arm-none-eabi/7.3.1/thumb/v7e-m/fpv4-sp/hard/crtbegin.o
  *(.bss*)
- .bss.debug     0x0000000020000c14        0x4 Core/Src/main.o
-                0x0000000020000c14                debug
- .bss.AFG_Freq  0x0000000020000c18        0x4 Core/Src/main.o
-                0x0000000020000c18                AFG_Freq
- .bss.AFG_Amplitude
-                0x0000000020000c1c        0x4 Core/Src/main.o
-                0x0000000020000c1c                AFG_Amplitude
+ .bss.debug     0x0000000020000c18        0x4 Core/Src/main.o
+                0x0000000020000c18                debug
+ .bss.AFG_Freq  0x0000000020000c1c        0x4 Core/Src/main.o
+                0x0000000020000c1c                AFG_Freq
  .bss.amplifier_x10
                 0x0000000020000c20        0x4 Core/Src/main.o
                 0x0000000020000c20                amplifier_x10
@@ -4857,7 +4857,7 @@ LOAD d:/everything2/programming/stm32cubeide_1.5.1/stm32cubeide/plugins/com.st.s
                 0x000000002000d278                __bss_end__ = _ebss
 
 ._user_heap_stack
-                0x000000002000d278      0x600 load address 0x000000000800c878
+                0x000000002000d278      0x600 load address 0x000000000800c87c
                 0x000000002000d278                . = ALIGN (0x8)
                 [!provide]                        PROVIDE (end = .)
                 0x000000002000d278                PROVIDE (_end = .)
