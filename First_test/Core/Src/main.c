@@ -330,6 +330,10 @@ int measureFrequency(short* data, int samples_taken, double timeframe, int trigg
  */
 void compressWaveform(short* data, short *newdata, int samples_taken, int resolution_x, int output_offset)
 {
+	if(output_offset != 0)
+	{
+		output_offset += 1;
+	}
 	if(debug)
 	{
 		printStr("Compressing waveform... at offset");
@@ -464,7 +468,7 @@ void getWaveform(short* data_out, int resolution_x, double sample_time)
 	//samples_needed = 220000*timeframe*0.001;
 	//printInt(samples_needed);
 	//int samples_needed = (double)samples_per_ms*timeframe;
-	int samples_needed = (sample_time/7.96)*MAX_SAMPLES; //At 19.5 cycles per reading, 25000 samples are taken in 25.1ms
+	int samples_needed = (sample_time/7.96)*MAX_SAMPLES; //At 19.5 cycles per reading, 25000 samples are taken in 8ms
 	if(samples_needed < MAX_SAMPLES)
 	{
 		if(debug)
@@ -522,7 +526,13 @@ void getWaveform(short* data_out, int resolution_x, double sample_time)
 				getDataAndWait(data, MAX_SAMPLES);
 				//printInt(samples_per_dataset);
 				compressWaveform(data, data_out, MAX_SAMPLES, (((float)(MAX_SAMPLES*(datasets_done+1))/(samples_needed))*resolution_x), ((float)(MAX_SAMPLES*datasets_done)/(samples_needed))*resolution_x);//datasets_done * samples_per_dataset);
-				//printInt(data_out[0]);
+				if(datasets_done != 0)
+				{
+					data_out[(int)((((float)(MAX_SAMPLES*(datasets_done))/(samples_needed))*resolution_x))+1] = data[25];
+					data_out[(int)((((float)(MAX_SAMPLES*(datasets_done))/(samples_needed))*resolution_x))] = data[20];
+					data_out[(int)((((float)(MAX_SAMPLES*(datasets_done))/(samples_needed))*resolution_x))-1] = data[15];
+				}
+					//printInt(data_out[0]);
 			}
 			else
 			{
@@ -537,7 +547,9 @@ void getWaveform(short* data_out, int resolution_x, double sample_time)
 				int samples_current_dataset = MAX_SAMPLES*(datasets_needed - datasets_done);
 				getDataAndWait(data, samples_current_dataset);
 				compressWaveform(data, data_out, samples_current_dataset, resolution_x, (((float)(MAX_SAMPLES*datasets_done)/(samples_needed))*resolution_x));
-
+				data_out[(int)((((float)(MAX_SAMPLES*(datasets_done))/(samples_needed))*resolution_x))+1] = data[25];
+				data_out[(int)((((float)(MAX_SAMPLES*(datasets_done))/(samples_needed))*resolution_x))] = data[20];
+				data_out[(int)((((float)(MAX_SAMPLES*(datasets_done))/(samples_needed))*resolution_x))-1] = data[15];
 			}
 			datasets_done++;
 			/*
