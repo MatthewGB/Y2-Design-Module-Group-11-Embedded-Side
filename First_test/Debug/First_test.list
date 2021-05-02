@@ -2489,355 +2489,355 @@ int main(void)
  800167e:	48b1      	ldr	r0, [pc, #708]	; (8001944 <main+0x334>)
  8001680:	f7ff fa6c 	bl	8000b5c <printStr>
 	  char input[2];
-	  while(readSerial(input, 1, 100000, debug) == 1)
+	  while(readSerial(input, 1, 100000, 1) == 1)
  8001684:	e002      	b.n	800168c <main+0x7c>
 	  {
 		  printStr(">");
  8001686:	48af      	ldr	r0, [pc, #700]	; (8001944 <main+0x334>)
  8001688:	f7ff fa68 	bl	8000b5c <printStr>
-	  while(readSerial(input, 1, 100000, debug) == 1)
- 800168c:	4bab      	ldr	r3, [pc, #684]	; (800193c <main+0x32c>)
- 800168e:	681b      	ldr	r3, [r3, #0]
- 8001690:	f107 0054 	add.w	r0, r7, #84	; 0x54
- 8001694:	4aac      	ldr	r2, [pc, #688]	; (8001948 <main+0x338>)
- 8001696:	2101      	movs	r1, #1
- 8001698:	f7ff fb2c 	bl	8000cf4 <readSerial>
- 800169c:	4603      	mov	r3, r0
- 800169e:	2b01      	cmp	r3, #1
- 80016a0:	d0f1      	beq.n	8001686 <main+0x76>
+	  while(readSerial(input, 1, 100000, 1) == 1)
+ 800168c:	f107 0054 	add.w	r0, r7, #84	; 0x54
+ 8001690:	2301      	movs	r3, #1
+ 8001692:	4aad      	ldr	r2, [pc, #692]	; (8001948 <main+0x338>)
+ 8001694:	2101      	movs	r1, #1
+ 8001696:	f7ff fb2d 	bl	8000cf4 <readSerial>
+ 800169a:	4603      	mov	r3, r0
+ 800169c:	2b01      	cmp	r3, #1
+ 800169e:	d0f2      	beq.n	8001686 <main+0x76>
 	  }
 
 	  if(input[0] == 'A') //Acquire data
- 80016a2:	f897 3054 	ldrb.w	r3, [r7, #84]	; 0x54
- 80016a6:	2b41      	cmp	r3, #65	; 0x41
- 80016a8:	d155      	bne.n	8001756 <main+0x146>
+ 80016a0:	f897 3054 	ldrb.w	r3, [r7, #84]	; 0x54
+ 80016a4:	2b41      	cmp	r3, #65	; 0x41
+ 80016a6:	d155      	bne.n	8001754 <main+0x144>
 	  {
- 80016aa:	466b      	mov	r3, sp
- 80016ac:	461d      	mov	r5, r3
+ 80016a8:	466b      	mov	r3, sp
+ 80016aa:	461d      	mov	r5, r3
 		  short newdata[resolution_x];
- 80016ae:	4ba7      	ldr	r3, [pc, #668]	; (800194c <main+0x33c>)
- 80016b0:	6818      	ldr	r0, [r3, #0]
- 80016b2:	1e43      	subs	r3, r0, #1
- 80016b4:	65fb      	str	r3, [r7, #92]	; 0x5c
- 80016b6:	4603      	mov	r3, r0
- 80016b8:	4619      	mov	r1, r3
- 80016ba:	f04f 0200 	mov.w	r2, #0
- 80016be:	f04f 0300 	mov.w	r3, #0
- 80016c2:	f04f 0400 	mov.w	r4, #0
- 80016c6:	0114      	lsls	r4, r2, #4
- 80016c8:	ea44 7411 	orr.w	r4, r4, r1, lsr #28
- 80016cc:	010b      	lsls	r3, r1, #4
- 80016ce:	4603      	mov	r3, r0
- 80016d0:	4619      	mov	r1, r3
- 80016d2:	f04f 0200 	mov.w	r2, #0
- 80016d6:	f04f 0300 	mov.w	r3, #0
- 80016da:	f04f 0400 	mov.w	r4, #0
- 80016de:	0114      	lsls	r4, r2, #4
- 80016e0:	ea44 7411 	orr.w	r4, r4, r1, lsr #28
- 80016e4:	010b      	lsls	r3, r1, #4
- 80016e6:	4603      	mov	r3, r0
- 80016e8:	005b      	lsls	r3, r3, #1
- 80016ea:	3301      	adds	r3, #1
- 80016ec:	3307      	adds	r3, #7
- 80016ee:	08db      	lsrs	r3, r3, #3
- 80016f0:	00db      	lsls	r3, r3, #3
- 80016f2:	ebad 0d03 	sub.w	sp, sp, r3
- 80016f6:	466b      	mov	r3, sp
- 80016f8:	3301      	adds	r3, #1
- 80016fa:	085b      	lsrs	r3, r3, #1
- 80016fc:	005b      	lsls	r3, r3, #1
- 80016fe:	65bb      	str	r3, [r7, #88]	; 0x58
+ 80016ac:	4ba7      	ldr	r3, [pc, #668]	; (800194c <main+0x33c>)
+ 80016ae:	6818      	ldr	r0, [r3, #0]
+ 80016b0:	1e43      	subs	r3, r0, #1
+ 80016b2:	65fb      	str	r3, [r7, #92]	; 0x5c
+ 80016b4:	4603      	mov	r3, r0
+ 80016b6:	4619      	mov	r1, r3
+ 80016b8:	f04f 0200 	mov.w	r2, #0
+ 80016bc:	f04f 0300 	mov.w	r3, #0
+ 80016c0:	f04f 0400 	mov.w	r4, #0
+ 80016c4:	0114      	lsls	r4, r2, #4
+ 80016c6:	ea44 7411 	orr.w	r4, r4, r1, lsr #28
+ 80016ca:	010b      	lsls	r3, r1, #4
+ 80016cc:	4603      	mov	r3, r0
+ 80016ce:	4619      	mov	r1, r3
+ 80016d0:	f04f 0200 	mov.w	r2, #0
+ 80016d4:	f04f 0300 	mov.w	r3, #0
+ 80016d8:	f04f 0400 	mov.w	r4, #0
+ 80016dc:	0114      	lsls	r4, r2, #4
+ 80016de:	ea44 7411 	orr.w	r4, r4, r1, lsr #28
+ 80016e2:	010b      	lsls	r3, r1, #4
+ 80016e4:	4603      	mov	r3, r0
+ 80016e6:	005b      	lsls	r3, r3, #1
+ 80016e8:	3301      	adds	r3, #1
+ 80016ea:	3307      	adds	r3, #7
+ 80016ec:	08db      	lsrs	r3, r3, #3
+ 80016ee:	00db      	lsls	r3, r3, #3
+ 80016f0:	ebad 0d03 	sub.w	sp, sp, r3
+ 80016f4:	466b      	mov	r3, sp
+ 80016f6:	3301      	adds	r3, #1
+ 80016f8:	085b      	lsrs	r3, r3, #1
+ 80016fa:	005b      	lsls	r3, r3, #1
+ 80016fc:	65bb      	str	r3, [r7, #88]	; 0x58
 		  for(int i = 0; i<resolution_x; i++)
- 8001700:	2300      	movs	r3, #0
- 8001702:	f8c7 3090 	str.w	r3, [r7, #144]	; 0x90
- 8001706:	e00a      	b.n	800171e <main+0x10e>
+ 80016fe:	2300      	movs	r3, #0
+ 8001700:	f8c7 3090 	str.w	r3, [r7, #144]	; 0x90
+ 8001704:	e00a      	b.n	800171c <main+0x10c>
 		  {
 			  newdata[i] = 0;
- 8001708:	6dbb      	ldr	r3, [r7, #88]	; 0x58
- 800170a:	f8d7 2090 	ldr.w	r2, [r7, #144]	; 0x90
- 800170e:	2100      	movs	r1, #0
- 8001710:	f823 1012 	strh.w	r1, [r3, r2, lsl #1]
+ 8001706:	6dbb      	ldr	r3, [r7, #88]	; 0x58
+ 8001708:	f8d7 2090 	ldr.w	r2, [r7, #144]	; 0x90
+ 800170c:	2100      	movs	r1, #0
+ 800170e:	f823 1012 	strh.w	r1, [r3, r2, lsl #1]
 		  for(int i = 0; i<resolution_x; i++)
- 8001714:	f8d7 3090 	ldr.w	r3, [r7, #144]	; 0x90
- 8001718:	3301      	adds	r3, #1
- 800171a:	f8c7 3090 	str.w	r3, [r7, #144]	; 0x90
- 800171e:	4b8b      	ldr	r3, [pc, #556]	; (800194c <main+0x33c>)
- 8001720:	681b      	ldr	r3, [r3, #0]
- 8001722:	f8d7 2090 	ldr.w	r2, [r7, #144]	; 0x90
- 8001726:	429a      	cmp	r2, r3
- 8001728:	dbee      	blt.n	8001708 <main+0xf8>
+ 8001712:	f8d7 3090 	ldr.w	r3, [r7, #144]	; 0x90
+ 8001716:	3301      	adds	r3, #1
+ 8001718:	f8c7 3090 	str.w	r3, [r7, #144]	; 0x90
+ 800171c:	4b8b      	ldr	r3, [pc, #556]	; (800194c <main+0x33c>)
+ 800171e:	681b      	ldr	r3, [r3, #0]
+ 8001720:	f8d7 2090 	ldr.w	r2, [r7, #144]	; 0x90
+ 8001724:	429a      	cmp	r2, r3
+ 8001726:	dbee      	blt.n	8001706 <main+0xf6>
 		  }
 		  getWaveform(newdata, resolution_x, sample_time);
- 800172a:	6dba      	ldr	r2, [r7, #88]	; 0x58
- 800172c:	4b87      	ldr	r3, [pc, #540]	; (800194c <main+0x33c>)
- 800172e:	6819      	ldr	r1, [r3, #0]
- 8001730:	4b87      	ldr	r3, [pc, #540]	; (8001950 <main+0x340>)
- 8001732:	ed93 7b00 	vldr	d7, [r3]
- 8001736:	eeb0 0a47 	vmov.f32	s0, s14
- 800173a:	eef0 0a67 	vmov.f32	s1, s15
- 800173e:	4610      	mov	r0, r2
- 8001740:	f7ff fc56 	bl	8000ff0 <getWaveform>
+ 8001728:	6dba      	ldr	r2, [r7, #88]	; 0x58
+ 800172a:	4b88      	ldr	r3, [pc, #544]	; (800194c <main+0x33c>)
+ 800172c:	6819      	ldr	r1, [r3, #0]
+ 800172e:	4b88      	ldr	r3, [pc, #544]	; (8001950 <main+0x340>)
+ 8001730:	ed93 7b00 	vldr	d7, [r3]
+ 8001734:	eeb0 0a47 	vmov.f32	s0, s14
+ 8001738:	eef0 0a67 	vmov.f32	s1, s15
+ 800173c:	4610      	mov	r0, r2
+ 800173e:	f7ff fc57 	bl	8000ff0 <getWaveform>
 		  printWaveform(newdata, resolution_x);
- 8001744:	6dba      	ldr	r2, [r7, #88]	; 0x58
- 8001746:	4b81      	ldr	r3, [pc, #516]	; (800194c <main+0x33c>)
- 8001748:	681b      	ldr	r3, [r3, #0]
- 800174a:	4619      	mov	r1, r3
- 800174c:	4610      	mov	r0, r2
- 800174e:	f7ff faaf 	bl	8000cb0 <printWaveform>
- 8001752:	46ad      	mov	sp, r5
- 8001754:	e793      	b.n	800167e <main+0x6e>
+ 8001742:	6dba      	ldr	r2, [r7, #88]	; 0x58
+ 8001744:	4b81      	ldr	r3, [pc, #516]	; (800194c <main+0x33c>)
+ 8001746:	681b      	ldr	r3, [r3, #0]
+ 8001748:	4619      	mov	r1, r3
+ 800174a:	4610      	mov	r0, r2
+ 800174c:	f7ff fab0 	bl	8000cb0 <printWaveform>
+ 8001750:	46ad      	mov	sp, r5
+ 8001752:	e794      	b.n	800167e <main+0x6e>
 		  //printInt(measureFrequency(newdata, 1920, sample_time, 3000));
 	  }
 	  else if(input[0] == 'T') //Acquire data on trigger
- 8001756:	f897 3054 	ldrb.w	r3, [r7, #84]	; 0x54
- 800175a:	2b54      	cmp	r3, #84	; 0x54
- 800175c:	d16a      	bne.n	8001834 <main+0x224>
+ 8001754:	f897 3054 	ldrb.w	r3, [r7, #84]	; 0x54
+ 8001758:	2b54      	cmp	r3, #84	; 0x54
+ 800175a:	d16a      	bne.n	8001832 <main+0x222>
 	  {
- 800175e:	466b      	mov	r3, sp
- 8001760:	461d      	mov	r5, r3
+ 800175c:	466b      	mov	r3, sp
+ 800175e:	461d      	mov	r5, r3
 		  printStr(" ");
- 8001762:	487c      	ldr	r0, [pc, #496]	; (8001954 <main+0x344>)
- 8001764:	f7ff f9fa 	bl	8000b5c <printStr>
+ 8001760:	487c      	ldr	r0, [pc, #496]	; (8001954 <main+0x344>)
+ 8001762:	f7ff f9fb 	bl	8000b5c <printStr>
 		  if(debug)
- 8001768:	4b74      	ldr	r3, [pc, #464]	; (800193c <main+0x32c>)
- 800176a:	681b      	ldr	r3, [r3, #0]
- 800176c:	2b00      	cmp	r3, #0
- 800176e:	d002      	beq.n	8001776 <main+0x166>
+ 8001766:	4b75      	ldr	r3, [pc, #468]	; (800193c <main+0x32c>)
+ 8001768:	681b      	ldr	r3, [r3, #0]
+ 800176a:	2b00      	cmp	r3, #0
+ 800176c:	d002      	beq.n	8001774 <main+0x164>
 		  {
 			  printStr("Waiting for trigger... ");
- 8001770:	4879      	ldr	r0, [pc, #484]	; (8001958 <main+0x348>)
- 8001772:	f7ff f9f3 	bl	8000b5c <printStr>
+ 800176e:	487a      	ldr	r0, [pc, #488]	; (8001958 <main+0x348>)
+ 8001770:	f7ff f9f4 	bl	8000b5c <printStr>
 		  }
 		  short newdata[resolution_x];
- 8001776:	4b75      	ldr	r3, [pc, #468]	; (800194c <main+0x33c>)
- 8001778:	6818      	ldr	r0, [r3, #0]
- 800177a:	1e43      	subs	r3, r0, #1
- 800177c:	667b      	str	r3, [r7, #100]	; 0x64
- 800177e:	4603      	mov	r3, r0
- 8001780:	4619      	mov	r1, r3
- 8001782:	f04f 0200 	mov.w	r2, #0
- 8001786:	f04f 0300 	mov.w	r3, #0
- 800178a:	f04f 0400 	mov.w	r4, #0
- 800178e:	0114      	lsls	r4, r2, #4
- 8001790:	ea44 7411 	orr.w	r4, r4, r1, lsr #28
- 8001794:	010b      	lsls	r3, r1, #4
- 8001796:	4603      	mov	r3, r0
- 8001798:	4619      	mov	r1, r3
- 800179a:	f04f 0200 	mov.w	r2, #0
- 800179e:	f04f 0300 	mov.w	r3, #0
- 80017a2:	f04f 0400 	mov.w	r4, #0
- 80017a6:	0114      	lsls	r4, r2, #4
- 80017a8:	ea44 7411 	orr.w	r4, r4, r1, lsr #28
- 80017ac:	010b      	lsls	r3, r1, #4
- 80017ae:	4603      	mov	r3, r0
- 80017b0:	005b      	lsls	r3, r3, #1
- 80017b2:	3301      	adds	r3, #1
- 80017b4:	3307      	adds	r3, #7
- 80017b6:	08db      	lsrs	r3, r3, #3
- 80017b8:	00db      	lsls	r3, r3, #3
- 80017ba:	ebad 0d03 	sub.w	sp, sp, r3
- 80017be:	466b      	mov	r3, sp
- 80017c0:	3301      	adds	r3, #1
- 80017c2:	085b      	lsrs	r3, r3, #1
- 80017c4:	005b      	lsls	r3, r3, #1
- 80017c6:	663b      	str	r3, [r7, #96]	; 0x60
+ 8001774:	4b75      	ldr	r3, [pc, #468]	; (800194c <main+0x33c>)
+ 8001776:	6818      	ldr	r0, [r3, #0]
+ 8001778:	1e43      	subs	r3, r0, #1
+ 800177a:	667b      	str	r3, [r7, #100]	; 0x64
+ 800177c:	4603      	mov	r3, r0
+ 800177e:	4619      	mov	r1, r3
+ 8001780:	f04f 0200 	mov.w	r2, #0
+ 8001784:	f04f 0300 	mov.w	r3, #0
+ 8001788:	f04f 0400 	mov.w	r4, #0
+ 800178c:	0114      	lsls	r4, r2, #4
+ 800178e:	ea44 7411 	orr.w	r4, r4, r1, lsr #28
+ 8001792:	010b      	lsls	r3, r1, #4
+ 8001794:	4603      	mov	r3, r0
+ 8001796:	4619      	mov	r1, r3
+ 8001798:	f04f 0200 	mov.w	r2, #0
+ 800179c:	f04f 0300 	mov.w	r3, #0
+ 80017a0:	f04f 0400 	mov.w	r4, #0
+ 80017a4:	0114      	lsls	r4, r2, #4
+ 80017a6:	ea44 7411 	orr.w	r4, r4, r1, lsr #28
+ 80017aa:	010b      	lsls	r3, r1, #4
+ 80017ac:	4603      	mov	r3, r0
+ 80017ae:	005b      	lsls	r3, r3, #1
+ 80017b0:	3301      	adds	r3, #1
+ 80017b2:	3307      	adds	r3, #7
+ 80017b4:	08db      	lsrs	r3, r3, #3
+ 80017b6:	00db      	lsls	r3, r3, #3
+ 80017b8:	ebad 0d03 	sub.w	sp, sp, r3
+ 80017bc:	466b      	mov	r3, sp
+ 80017be:	3301      	adds	r3, #1
+ 80017c0:	085b      	lsrs	r3, r3, #1
+ 80017c2:	005b      	lsls	r3, r3, #1
+ 80017c4:	663b      	str	r3, [r7, #96]	; 0x60
 		  for(int i = 0; i<resolution_x; i++)
- 80017c8:	2300      	movs	r3, #0
- 80017ca:	f8c7 3094 	str.w	r3, [r7, #148]	; 0x94
- 80017ce:	e00a      	b.n	80017e6 <main+0x1d6>
+ 80017c6:	2300      	movs	r3, #0
+ 80017c8:	f8c7 3094 	str.w	r3, [r7, #148]	; 0x94
+ 80017cc:	e00a      	b.n	80017e4 <main+0x1d4>
 		  {
 			  newdata[i] = 0;
- 80017d0:	6e3b      	ldr	r3, [r7, #96]	; 0x60
- 80017d2:	f8d7 2094 	ldr.w	r2, [r7, #148]	; 0x94
- 80017d6:	2100      	movs	r1, #0
- 80017d8:	f823 1012 	strh.w	r1, [r3, r2, lsl #1]
+ 80017ce:	6e3b      	ldr	r3, [r7, #96]	; 0x60
+ 80017d0:	f8d7 2094 	ldr.w	r2, [r7, #148]	; 0x94
+ 80017d4:	2100      	movs	r1, #0
+ 80017d6:	f823 1012 	strh.w	r1, [r3, r2, lsl #1]
 		  for(int i = 0; i<resolution_x; i++)
- 80017dc:	f8d7 3094 	ldr.w	r3, [r7, #148]	; 0x94
- 80017e0:	3301      	adds	r3, #1
- 80017e2:	f8c7 3094 	str.w	r3, [r7, #148]	; 0x94
- 80017e6:	4b59      	ldr	r3, [pc, #356]	; (800194c <main+0x33c>)
- 80017e8:	681b      	ldr	r3, [r3, #0]
- 80017ea:	f8d7 2094 	ldr.w	r2, [r7, #148]	; 0x94
- 80017ee:	429a      	cmp	r2, r3
- 80017f0:	dbee      	blt.n	80017d0 <main+0x1c0>
+ 80017da:	f8d7 3094 	ldr.w	r3, [r7, #148]	; 0x94
+ 80017de:	3301      	adds	r3, #1
+ 80017e0:	f8c7 3094 	str.w	r3, [r7, #148]	; 0x94
+ 80017e4:	4b59      	ldr	r3, [pc, #356]	; (800194c <main+0x33c>)
+ 80017e6:	681b      	ldr	r3, [r3, #0]
+ 80017e8:	f8d7 2094 	ldr.w	r2, [r7, #148]	; 0x94
+ 80017ec:	429a      	cmp	r2, r3
+ 80017ee:	dbee      	blt.n	80017ce <main+0x1be>
 		  }
 		  if(getTriggeredWaveform(newdata, resolution_x, sample_time) == 1)
- 80017f2:	6e3a      	ldr	r2, [r7, #96]	; 0x60
- 80017f4:	4b55      	ldr	r3, [pc, #340]	; (800194c <main+0x33c>)
- 80017f6:	6819      	ldr	r1, [r3, #0]
- 80017f8:	4b55      	ldr	r3, [pc, #340]	; (8001950 <main+0x340>)
- 80017fa:	ed93 7b00 	vldr	d7, [r3]
- 80017fe:	eeb0 0a47 	vmov.f32	s0, s14
- 8001802:	eef0 0a67 	vmov.f32	s1, s15
- 8001806:	4610      	mov	r0, r2
- 8001808:	f7ff fb98 	bl	8000f3c <getTriggeredWaveform>
- 800180c:	4603      	mov	r3, r0
- 800180e:	2b01      	cmp	r3, #1
- 8001810:	d107      	bne.n	8001822 <main+0x212>
+ 80017f0:	6e3a      	ldr	r2, [r7, #96]	; 0x60
+ 80017f2:	4b56      	ldr	r3, [pc, #344]	; (800194c <main+0x33c>)
+ 80017f4:	6819      	ldr	r1, [r3, #0]
+ 80017f6:	4b56      	ldr	r3, [pc, #344]	; (8001950 <main+0x340>)
+ 80017f8:	ed93 7b00 	vldr	d7, [r3]
+ 80017fc:	eeb0 0a47 	vmov.f32	s0, s14
+ 8001800:	eef0 0a67 	vmov.f32	s1, s15
+ 8001804:	4610      	mov	r0, r2
+ 8001806:	f7ff fb99 	bl	8000f3c <getTriggeredWaveform>
+ 800180a:	4603      	mov	r3, r0
+ 800180c:	2b01      	cmp	r3, #1
+ 800180e:	d107      	bne.n	8001820 <main+0x210>
 		  {
 			  printWaveform(newdata, resolution_x);
- 8001812:	6e3a      	ldr	r2, [r7, #96]	; 0x60
- 8001814:	4b4d      	ldr	r3, [pc, #308]	; (800194c <main+0x33c>)
- 8001816:	681b      	ldr	r3, [r3, #0]
- 8001818:	4619      	mov	r1, r3
- 800181a:	4610      	mov	r0, r2
- 800181c:	f7ff fa48 	bl	8000cb0 <printWaveform>
- 8001820:	e006      	b.n	8001830 <main+0x220>
+ 8001810:	6e3a      	ldr	r2, [r7, #96]	; 0x60
+ 8001812:	4b4e      	ldr	r3, [pc, #312]	; (800194c <main+0x33c>)
+ 8001814:	681b      	ldr	r3, [r3, #0]
+ 8001816:	4619      	mov	r1, r3
+ 8001818:	4610      	mov	r0, r2
+ 800181a:	f7ff fa49 	bl	8000cb0 <printWaveform>
+ 800181e:	e006      	b.n	800182e <main+0x21e>
 		  }
 		  else
 		  {
 			  if(debug)
- 8001822:	4b46      	ldr	r3, [pc, #280]	; (800193c <main+0x32c>)
- 8001824:	681b      	ldr	r3, [r3, #0]
- 8001826:	2b00      	cmp	r3, #0
- 8001828:	d002      	beq.n	8001830 <main+0x220>
+ 8001820:	4b46      	ldr	r3, [pc, #280]	; (800193c <main+0x32c>)
+ 8001822:	681b      	ldr	r3, [r3, #0]
+ 8001824:	2b00      	cmp	r3, #0
+ 8001826:	d002      	beq.n	800182e <main+0x21e>
 			  {
 				  printStr("Cancelled");
- 800182a:	484c      	ldr	r0, [pc, #304]	; (800195c <main+0x34c>)
- 800182c:	f7ff f996 	bl	8000b5c <printStr>
- 8001830:	46ad      	mov	sp, r5
- 8001832:	e724      	b.n	800167e <main+0x6e>
+ 8001828:	484c      	ldr	r0, [pc, #304]	; (800195c <main+0x34c>)
+ 800182a:	f7ff f997 	bl	8000b5c <printStr>
+ 800182e:	46ad      	mov	sp, r5
+ 8001830:	e725      	b.n	800167e <main+0x6e>
 			  }
 		  }
 		  //printInt(measureFrequency(newdata, 1920, sample_time, 3000));
 	  }
 	  else if(input[0] == 'S') //Set variable
- 8001834:	f897 3054 	ldrb.w	r3, [r7, #84]	; 0x54
- 8001838:	2b53      	cmp	r3, #83	; 0x53
- 800183a:	f040 81ac 	bne.w	8001b96 <main+0x586>
+ 8001832:	f897 3054 	ldrb.w	r3, [r7, #84]	; 0x54
+ 8001836:	2b53      	cmp	r3, #83	; 0x53
+ 8001838:	f040 81ad 	bne.w	8001b96 <main+0x586>
 	  {
 		  if(debug) { printStr("SetVar"); }
- 800183e:	4b3f      	ldr	r3, [pc, #252]	; (800193c <main+0x32c>)
- 8001840:	681b      	ldr	r3, [r3, #0]
- 8001842:	2b00      	cmp	r3, #0
- 8001844:	d002      	beq.n	800184c <main+0x23c>
- 8001846:	4846      	ldr	r0, [pc, #280]	; (8001960 <main+0x350>)
- 8001848:	f7ff f988 	bl	8000b5c <printStr>
+ 800183c:	4b3f      	ldr	r3, [pc, #252]	; (800193c <main+0x32c>)
+ 800183e:	681b      	ldr	r3, [r3, #0]
+ 8001840:	2b00      	cmp	r3, #0
+ 8001842:	d002      	beq.n	800184a <main+0x23a>
+ 8001844:	4846      	ldr	r0, [pc, #280]	; (8001960 <main+0x350>)
+ 8001846:	f7ff f989 	bl	8000b5c <printStr>
 
 		  char variable_name[21];
 		  readSerial(variable_name, 20, 20000, 1);
- 800184c:	f107 003c 	add.w	r0, r7, #60	; 0x3c
- 8001850:	2301      	movs	r3, #1
- 8001852:	f644 6220 	movw	r2, #20000	; 0x4e20
- 8001856:	2114      	movs	r1, #20
- 8001858:	f7ff fa4c 	bl	8000cf4 <readSerial>
+ 800184a:	f107 003c 	add.w	r0, r7, #60	; 0x3c
+ 800184e:	2301      	movs	r3, #1
+ 8001850:	f644 6220 	movw	r2, #20000	; 0x4e20
+ 8001854:	2114      	movs	r1, #20
+ 8001856:	f7ff fa4d 	bl	8000cf4 <readSerial>
 		  variable_name[20] = '\0';
- 800185c:	2300      	movs	r3, #0
- 800185e:	f887 3050 	strb.w	r3, [r7, #80]	; 0x50
+ 800185a:	2300      	movs	r3, #0
+ 800185c:	f887 3050 	strb.w	r3, [r7, #80]	; 0x50
 
 		  char variable_value[21];
 		  readSerial(variable_value, 20, 20000, 1);
- 8001862:	f107 0024 	add.w	r0, r7, #36	; 0x24
- 8001866:	2301      	movs	r3, #1
- 8001868:	f644 6220 	movw	r2, #20000	; 0x4e20
- 800186c:	2114      	movs	r1, #20
- 800186e:	f7ff fa41 	bl	8000cf4 <readSerial>
+ 8001860:	f107 0024 	add.w	r0, r7, #36	; 0x24
+ 8001864:	2301      	movs	r3, #1
+ 8001866:	f644 6220 	movw	r2, #20000	; 0x4e20
+ 800186a:	2114      	movs	r1, #20
+ 800186c:	f7ff fa42 	bl	8000cf4 <readSerial>
 		  variable_value[20] = '\0';
- 8001872:	2300      	movs	r3, #0
- 8001874:	f887 3038 	strb.w	r3, [r7, #56]	; 0x38
+ 8001870:	2300      	movs	r3, #0
+ 8001872:	f887 3038 	strb.w	r3, [r7, #56]	; 0x38
 
 		  if(strcmp(variable_name, "resolution_x") == 0)
- 8001878:	f107 033c 	add.w	r3, r7, #60	; 0x3c
- 800187c:	4939      	ldr	r1, [pc, #228]	; (8001964 <main+0x354>)
- 800187e:	4618      	mov	r0, r3
- 8001880:	f7fe fcaa 	bl	80001d8 <strcmp>
- 8001884:	4603      	mov	r3, r0
- 8001886:	2b00      	cmp	r3, #0
- 8001888:	d113      	bne.n	80018b2 <main+0x2a2>
+ 8001876:	f107 033c 	add.w	r3, r7, #60	; 0x3c
+ 800187a:	493a      	ldr	r1, [pc, #232]	; (8001964 <main+0x354>)
+ 800187c:	4618      	mov	r0, r3
+ 800187e:	f7fe fcab 	bl	80001d8 <strcmp>
+ 8001882:	4603      	mov	r3, r0
+ 8001884:	2b00      	cmp	r3, #0
+ 8001886:	d113      	bne.n	80018b0 <main+0x2a0>
 		  {
 			  char *end;
 			  int newval = strtol(variable_value, &end, 10);
- 800188a:	f107 0120 	add.w	r1, r7, #32
- 800188e:	f107 0324 	add.w	r3, r7, #36	; 0x24
- 8001892:	220a      	movs	r2, #10
- 8001894:	4618      	mov	r0, r3
- 8001896:	f008 fd63 	bl	800a360 <strtol>
- 800189a:	66b8      	str	r0, [r7, #104]	; 0x68
+ 8001888:	f107 0120 	add.w	r1, r7, #32
+ 800188c:	f107 0324 	add.w	r3, r7, #36	; 0x24
+ 8001890:	220a      	movs	r2, #10
+ 8001892:	4618      	mov	r0, r3
+ 8001894:	f008 fd64 	bl	800a360 <strtol>
+ 8001898:	66b8      	str	r0, [r7, #104]	; 0x68
 			  if(newval == 0)
- 800189c:	6ebb      	ldr	r3, [r7, #104]	; 0x68
- 800189e:	2b00      	cmp	r3, #0
- 80018a0:	d103      	bne.n	80018aa <main+0x29a>
+ 800189a:	6ebb      	ldr	r3, [r7, #104]	; 0x68
+ 800189c:	2b00      	cmp	r3, #0
+ 800189e:	d103      	bne.n	80018a8 <main+0x298>
 			  {
 				  printStr("Invalid number");
- 80018a2:	4831      	ldr	r0, [pc, #196]	; (8001968 <main+0x358>)
- 80018a4:	f7ff f95a 	bl	8000b5c <printStr>
- 80018a8:	e6e9      	b.n	800167e <main+0x6e>
+ 80018a0:	4831      	ldr	r0, [pc, #196]	; (8001968 <main+0x358>)
+ 80018a2:	f7ff f95b 	bl	8000b5c <printStr>
+ 80018a6:	e6ea      	b.n	800167e <main+0x6e>
 			  }
 			  else
 			  {
 				  resolution_x = newval;
- 80018aa:	4a28      	ldr	r2, [pc, #160]	; (800194c <main+0x33c>)
- 80018ac:	6ebb      	ldr	r3, [r7, #104]	; 0x68
- 80018ae:	6013      	str	r3, [r2, #0]
- 80018b0:	e6e5      	b.n	800167e <main+0x6e>
+ 80018a8:	4a28      	ldr	r2, [pc, #160]	; (800194c <main+0x33c>)
+ 80018aa:	6ebb      	ldr	r3, [r7, #104]	; 0x68
+ 80018ac:	6013      	str	r3, [r2, #0]
+ 80018ae:	e6e6      	b.n	800167e <main+0x6e>
 			  }
 		  }
 		  else if(strcmp(variable_name, "resolution_y") == 0)
- 80018b2:	f107 033c 	add.w	r3, r7, #60	; 0x3c
- 80018b6:	492d      	ldr	r1, [pc, #180]	; (800196c <main+0x35c>)
- 80018b8:	4618      	mov	r0, r3
- 80018ba:	f7fe fc8d 	bl	80001d8 <strcmp>
- 80018be:	4603      	mov	r3, r0
- 80018c0:	2b00      	cmp	r3, #0
- 80018c2:	d113      	bne.n	80018ec <main+0x2dc>
+ 80018b0:	f107 033c 	add.w	r3, r7, #60	; 0x3c
+ 80018b4:	492d      	ldr	r1, [pc, #180]	; (800196c <main+0x35c>)
+ 80018b6:	4618      	mov	r0, r3
+ 80018b8:	f7fe fc8e 	bl	80001d8 <strcmp>
+ 80018bc:	4603      	mov	r3, r0
+ 80018be:	2b00      	cmp	r3, #0
+ 80018c0:	d113      	bne.n	80018ea <main+0x2da>
 		  {
 			  char *end;
 			  int newval = strtol(variable_value, &end, 10);
- 80018c4:	f107 011c 	add.w	r1, r7, #28
- 80018c8:	f107 0324 	add.w	r3, r7, #36	; 0x24
- 80018cc:	220a      	movs	r2, #10
- 80018ce:	4618      	mov	r0, r3
- 80018d0:	f008 fd46 	bl	800a360 <strtol>
- 80018d4:	66f8      	str	r0, [r7, #108]	; 0x6c
+ 80018c2:	f107 011c 	add.w	r1, r7, #28
+ 80018c6:	f107 0324 	add.w	r3, r7, #36	; 0x24
+ 80018ca:	220a      	movs	r2, #10
+ 80018cc:	4618      	mov	r0, r3
+ 80018ce:	f008 fd47 	bl	800a360 <strtol>
+ 80018d2:	66f8      	str	r0, [r7, #108]	; 0x6c
 			  if(newval == 0)
- 80018d6:	6efb      	ldr	r3, [r7, #108]	; 0x6c
- 80018d8:	2b00      	cmp	r3, #0
- 80018da:	d103      	bne.n	80018e4 <main+0x2d4>
+ 80018d4:	6efb      	ldr	r3, [r7, #108]	; 0x6c
+ 80018d6:	2b00      	cmp	r3, #0
+ 80018d8:	d103      	bne.n	80018e2 <main+0x2d2>
 			  {
 				  printStr("Invalid number");
- 80018dc:	4822      	ldr	r0, [pc, #136]	; (8001968 <main+0x358>)
- 80018de:	f7ff f93d 	bl	8000b5c <printStr>
- 80018e2:	e6cc      	b.n	800167e <main+0x6e>
+ 80018da:	4823      	ldr	r0, [pc, #140]	; (8001968 <main+0x358>)
+ 80018dc:	f7ff f93e 	bl	8000b5c <printStr>
+ 80018e0:	e6cd      	b.n	800167e <main+0x6e>
 			  }
 			  else
 			  {
 				  resolution_y = newval;
- 80018e4:	4a22      	ldr	r2, [pc, #136]	; (8001970 <main+0x360>)
- 80018e6:	6efb      	ldr	r3, [r7, #108]	; 0x6c
- 80018e8:	6013      	str	r3, [r2, #0]
- 80018ea:	e6c8      	b.n	800167e <main+0x6e>
+ 80018e2:	4a23      	ldr	r2, [pc, #140]	; (8001970 <main+0x360>)
+ 80018e4:	6efb      	ldr	r3, [r7, #108]	; 0x6c
+ 80018e6:	6013      	str	r3, [r2, #0]
+ 80018e8:	e6c9      	b.n	800167e <main+0x6e>
 			  }
 		  }
 		  else if(strcmp(variable_name, "sample_time") == 0)
- 80018ec:	f107 033c 	add.w	r3, r7, #60	; 0x3c
- 80018f0:	4920      	ldr	r1, [pc, #128]	; (8001974 <main+0x364>)
- 80018f2:	4618      	mov	r0, r3
- 80018f4:	f7fe fc70 	bl	80001d8 <strcmp>
- 80018f8:	4603      	mov	r3, r0
- 80018fa:	2b00      	cmp	r3, #0
- 80018fc:	d142      	bne.n	8001984 <main+0x374>
+ 80018ea:	f107 033c 	add.w	r3, r7, #60	; 0x3c
+ 80018ee:	4921      	ldr	r1, [pc, #132]	; (8001974 <main+0x364>)
+ 80018f0:	4618      	mov	r0, r3
+ 80018f2:	f7fe fc71 	bl	80001d8 <strcmp>
+ 80018f6:	4603      	mov	r3, r0
+ 80018f8:	2b00      	cmp	r3, #0
+ 80018fa:	d143      	bne.n	8001984 <main+0x374>
 		  {
 			  char *end;
 			  double newval = strtod(variable_value, &end);
- 80018fe:	f107 0218 	add.w	r2, r7, #24
- 8001902:	f107 0324 	add.w	r3, r7, #36	; 0x24
- 8001906:	4611      	mov	r1, r2
- 8001908:	4618      	mov	r0, r3
- 800190a:	f008 fc99 	bl	800a240 <strtod>
- 800190e:	ed87 0b1c 	vstr	d0, [r7, #112]	; 0x70
+ 80018fc:	f107 0218 	add.w	r2, r7, #24
+ 8001900:	f107 0324 	add.w	r3, r7, #36	; 0x24
+ 8001904:	4611      	mov	r1, r2
+ 8001906:	4618      	mov	r0, r3
+ 8001908:	f008 fc9a 	bl	800a240 <strtod>
+ 800190c:	ed87 0b1c 	vstr	d0, [r7, #112]	; 0x70
 			  if(newval == 0)
- 8001912:	f04f 0200 	mov.w	r2, #0
- 8001916:	f04f 0300 	mov.w	r3, #0
- 800191a:	e9d7 011c 	ldrd	r0, r1, [r7, #112]	; 0x70
- 800191e:	f7ff f891 	bl	8000a44 <__aeabi_dcmpeq>
- 8001922:	4603      	mov	r3, r0
- 8001924:	2b00      	cmp	r3, #0
- 8001926:	d027      	beq.n	8001978 <main+0x368>
+ 8001910:	f04f 0200 	mov.w	r2, #0
+ 8001914:	f04f 0300 	mov.w	r3, #0
+ 8001918:	e9d7 011c 	ldrd	r0, r1, [r7, #112]	; 0x70
+ 800191c:	f7ff f892 	bl	8000a44 <__aeabi_dcmpeq>
+ 8001920:	4603      	mov	r3, r0
+ 8001922:	2b00      	cmp	r3, #0
+ 8001924:	d028      	beq.n	8001978 <main+0x368>
 			  {
 				  printStr("Invalid number");
- 8001928:	480f      	ldr	r0, [pc, #60]	; (8001968 <main+0x358>)
- 800192a:	f7ff f917 	bl	8000b5c <printStr>
- 800192e:	e6a6      	b.n	800167e <main+0x6e>
+ 8001926:	4810      	ldr	r0, [pc, #64]	; (8001968 <main+0x358>)
+ 8001928:	f7ff f918 	bl	8000b5c <printStr>
+ 800192c:	e6a7      	b.n	800167e <main+0x6e>
+ 800192e:	bf00      	nop
  8001930:	e000edf0 	.word	0xe000edf0
  8001934:	e0001000 	.word	0xe0001000
  8001938:	20000d2c 	.word	0x20000d2c

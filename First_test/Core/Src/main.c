@@ -63,6 +63,7 @@ UART_HandleTypeDef huart2;
 
 const int CLOCK_SPEED = 72000000; //Needed to measure time using clock cycles passed
 const int RAM_SIZE = 80000; //kB
+
 const int MAX_SAMPLES = 25000; //Uses 50kB of memory, value here must match the size of the 'data' array on line 68
 const double ADC_CYCLES = 61.5; //Set in .ioc
 const int TIMER_FREQ_TIMES_ARR = 560000; //TIM2->ARR = 40 gives 14kHz
@@ -785,7 +786,6 @@ int main(void)
 	  }
 	  else if(input[0] == 'T') //Acquire data on trigger
 	  {
-		  printStr(" ");
 		  if(debug)
 		  {
 			  printStr("Waiting for trigger... ");
@@ -801,6 +801,7 @@ int main(void)
 		  }
 		  else
 		  {
+			  printStr(" ");
 			  if(debug)
 			  {
 				  printStr("Cancelled");
