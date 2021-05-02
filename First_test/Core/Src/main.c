@@ -237,7 +237,7 @@ void printWaveform(short data[], int size)
  */
 int readSerial(char* outputString, int readsize, int timeout, int printchar)
 {
-	int starttime = HAL_GetTick();
+	int starttime = HAL_GetTick(); //Used to check for timeout
 	char rxedString[readsize+1];
 	for(int i = 0; i<readsize; i++)
 	{
@@ -250,16 +250,16 @@ int readSerial(char* outputString, int readsize, int timeout, int printchar)
 		  HAL_UART_Receive(&huart2, (uint8_t *)rxedChar, 1, 100);
 
 		  if (rxedChar[0] == '\n' || rxedChar[0] == '\r' || rxedChar[0] == ' ') {
-			  break;
+			  break; //If a newline or space is received, stop receiving data and return the string
 		  }
 
 		  if(rxedChar[0] != '#')
 		  {
-			  rxedString[charnum] = rxedChar[0];
+			  rxedString[charnum] = rxedChar[0]; //Add the newly received character to the string
 			  charnum += 1;
 			  if(printchar == 1)
 			  {
-				  printChar(rxedChar[0]);
+				  printChar(rxedChar[0]); //If enabled, the MCU will echo characters sent to it, helpful in command line
 			  }
 			  rxedChar[0] = '#';
 		  }
@@ -271,7 +271,7 @@ int readSerial(char* outputString, int readsize, int timeout, int printchar)
 
 		  if(HAL_GetTick()-starttime > timeout)
 		  {
-			  return 1;
+			  return 1; //Checks if timed out, if so return 1 instead of
 		  }
 	}
 
@@ -573,8 +573,22 @@ void ADC_IRQHandler()
 
 void afgAmplitudeAdjustment(int new_amplitude)
 {
-	AFG_Amplitude = new_amplitude;
 	float ratio = AFG_Amplitude/3300.0f;
+	ratio = 1/ratio;
+	for(int i = 0; i<128; i++)
+	{
+		int previous_amplitude = LUT_CurrentWave[i];
+		if(previous_amplitude > 2048)
+		{
+			LUT_CurrentWave[i] = 2048+((previous_amplitude-2048)*ratio);
+		}
+		else
+		{
+			LUT_CurrentWave[i] = 2048-((2048-previous_amplitude)*ratio);
+		}
+	}
+	AFG_Amplitude = new_amplitude;
+	ratio = AFG_Amplitude/3300.0f;
 	for(int i = 0; i<128; i++)
 	{
 		int previous_amplitude = LUT_CurrentWave[i];
